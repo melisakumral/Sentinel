@@ -16,12 +16,8 @@ export const CONTRACT_ID = import.meta.env.VITE_CONTRACT_ID as string | undefine
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
 
-// 1 XLM = 10^7 stroop.
-export const STROOPS_PER_XLM = 10_000_000n;
-export const toStroops = (xlm: number): bigint =>
-  BigInt(Math.round(xlm * Number(STROOPS_PER_XLM)));
-export const fromStroops = (stroops: bigint): number =>
-  Number(stroops) / Number(STROOPS_PER_XLM);
+// Saf (bağımlılıksız, test edilebilir) stroop <-> XLM dönüşümü `stroops.ts`'e taşındı.
+export { STROOPS_PER_XLM, toStroops, fromStroops } from './stroops';
 
 const server = new rpc.Server(RPC_URL);
 
