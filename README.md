@@ -71,9 +71,9 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | Documentation & demo presentation | ✅ This README + the delivery info below |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
 | 10+ meaningful commits | ✅ See git history |
-| Live demo link (Vercel etc.) | ⬜ Manual — see "Remaining Manual Steps" |
-| Screenshots (mobile, CI, test output) | ⬜ Manual — see "Remaining Manual Steps" |
-| Demo video (1-2 min) | ⬜ Manual — see "Remaining Manual Steps" |
+| Live demo link (Vercel etc.) | ⬜ (https://www.loom.com/share/990394f3fc3a4d289aecb7e18f242654) |
+| Screenshots (mobile, CI, test output) | ⬜ https://www.loom.com/share/990394f3fc3a4d289aecb7e18f242654|
+| Demo video (1-2 min) | ⬜(https://www.loom.com/share/990394f3fc3a4d289aecb7e18f242654) |
 
 ## 🛰️ Sentinel Watch — Soroban Monitoring, Alerts & Simulator
 
