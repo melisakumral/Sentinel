@@ -7,7 +7,7 @@ name = "sentinel-contract"
 version = "0.1.0"
 edition = "2021"
 publish = false
-description = "Sentinel - Stellar/Soroban katkı havuzu sözleşmesi (donate / get_total / get_donation)"
+description = "Sentinel - Stellar/Soroban crowdfunding contract (initialize / deposit / claim / refund)"
 
 [lib]
 crate-type = ["cdylib"]
@@ -19,7 +19,7 @@ soroban-sdk = "22"
 [dev-dependencies]
 soroban-sdk = { version = "22", features = ["testutils"] }
 
-# Soroban için optimize edilmiş release profili (küçük .wasm çıktısı)
+# Release profile optimized for Soroban (small .wasm output)
 [profile.release]
 opt-level = "z"
 overflow-checks = true

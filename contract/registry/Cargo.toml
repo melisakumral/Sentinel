@@ -3,7 +3,7 @@ name = "sentinel-registry"
 version = "0.1.0"
 edition = "2021"
 publish = false
-description = "Sentinel - kampanya sonuçlarını kaydeden registry sözleşmesi (inter-contract call hedefi)"
+description = "Sentinel - registry contract that records campaign outcomes (inter-contract call target)"
 
 [lib]
 crate-type = ["cdylib"]

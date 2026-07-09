@@ -1,11 +1,11 @@
 #![no_std]
-//! Sentinel Registry — kampanya sözleşmelerinin nihai sonucunu (claim/refund) kaydeden
-//! bağımsız bir sözleşme.
+//! Sentinel Registry — an independent contract that records the final
+//! (claim/refund) outcome of campaign contracts.
 //!
-//! `sentinel-contract` (kampanya sözleşmesi), `claim`/`refund` sonrası bu sözleşmeyi
-//! gerçek bir **inter-contract call** (`env.invoke_contract`) ile çağırır. Kayıt
-//! idempotent'tir: aynı kampanya için ikinci çağrı yok sayılır, böylece kampanya
-//! sözleşmesi tekrar tekrar (örn. her `refund` çağrısında) bildirebilir.
+//! `sentinel-contract` (the campaign contract) calls this contract after
+//! `claim`/`refund` via a real **inter-contract call** (`env.invoke_contract`).
+//! Recording is idempotent: a second call for the same campaign is ignored, so
+//! the campaign contract is free to report repeatedly (e.g. on every `refund` call).
 use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env};
 
 #[contracttype]
@@ -21,7 +21,7 @@ pub struct CampaignResult {
 #[contracttype]
 #[derive(Clone)]
 enum DataKey {
-    Result(Address), // kampanya sözleşme adresi -> sonuç
+    Result(Address), // campaign contract address -> result
     Count,
 }
 
@@ -30,9 +30,9 @@ pub struct SentinelRegistry;
 
 #[contractimpl]
 impl SentinelRegistry {
-    /// Bir Sentinel kampanya sözleşmesi kendi nihai sonucunu buraya kaydeder.
-    /// `campaign` çağıran sözleşmenin kendi adresidir; `require_auth` burada
-    /// çağıran kontratın kimliğini doğrular (contract-to-contract auth).
+    /// A Sentinel campaign contract records its own final outcome here.
+    /// `campaign` is the calling contract's own address; `require_auth` here
+    /// verifies the identity of the calling contract (contract-to-contract auth).
     pub fn record(
         env: Env,
         campaign: Address,
@@ -45,7 +45,7 @@ impl SentinelRegistry {
 
         let key = DataKey::Result(campaign.clone());
         if env.storage().persistent().has(&key) {
-            return; // idempotent: ilk kayıt kazanır
+            return; // idempotent: the first record wins
         }
 
         let result = CampaignResult {

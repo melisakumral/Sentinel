@@ -33,7 +33,7 @@ fn test_record_is_idempotent() {
     let recipient = Address::generate(&env);
 
     client.record(&campaign, &recipient, &10, &100, &false);
-    client.record(&campaign, &recipient, &999, &100, &true); // yok sayılır, ilk kayıt kalır
+    client.record(&campaign, &recipient, &999, &100, &true); // ignored, first record wins
 
     assert_eq!(client.count(), 1);
     let result = client.get_result(&campaign).unwrap();

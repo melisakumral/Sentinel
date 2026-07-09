@@ -1,56 +1,57 @@
 #![no_std]
-//! Sentinel — Stellar/Soroban Crowdfunding (kitle fonlama) sözleşmesi.
+//! Sentinel — Stellar/Soroban crowdfunding contract.
 //!
-//! Akış:
-//! 1. `initialize` — sahip; hedef tutar, son tarih (deadline), token ve bir
-//!    Sentinel Registry sözleşme adresi belirler.
-//! 2. `deposit`    — bağışçılar sözleşmeye gerçek token (XLM) gönderir.
-//! 3a. `claim`     — deadline sonrası hedefe ULAŞILDIYSA fonlar sahibe aktarılır.
-//! 3b. `refund`    — deadline sonrası hedefe ULAŞILAMADIYSA bağışçı parasını geri alır.
+//! Flow:
+//! 1. `initialize` — the owner sets the goal, deadline, token, and a
+//!    Sentinel Registry contract address.
+//! 2. `deposit`    — donors send real token (XLM) to the contract.
+//! 3a. `claim`     — after the deadline, if the goal was REACHED, funds go to the owner.
+//! 3b. `refund`    — after the deadline, if the goal was NOT reached, donors get refunded.
 //!
-//! `claim`/`refund` sonunda kampanya, nihai sonucunu **inter-contract call** ile
-//! Sentinel Registry sözleşmesine bildirir (`notify_registry`) ve zincir üstünde
-//! bir olay (event) yayınlar — böylece frontend gerçek zamanlı akışı dinleyebilir.
+//! After `claim`/`refund`, the campaign reports its final outcome to the
+//! Sentinel Registry contract via a real **inter-contract call**
+//! (`notify_registry`) and publishes an on-chain event — so the frontend can
+//! listen to a real-time stream.
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, token, vec, Address, Env,
     IntoVal, Symbol, Val,
 };
 
-/// Depolama anahtarları.
+/// Storage keys.
 #[contracttype]
 #[derive(Clone)]
 pub enum DataKey {
-    Recipient,             // Address — kampanya sahibi
-    Token,                 // Address — bağış token'ı (native XLM SAC)
-    Registry,              // Address — sonuçların bildirileceği Sentinel Registry sözleşmesi
-    Target,                // i128    — hedef tutar (stroop)
-    Deadline,              // u64     — bitiş zamanı (unix saniye)
-    Total,                 // i128    — toplanan toplam (stroop)
-    Claimed,               // bool    — sahip fonları çekti mi
-    Contribution(Address), // i128    — bağışçı bazlı katkı
+    Recipient,             // Address — campaign owner
+    Token,                 // Address — donation token (native XLM SAC)
+    Registry,              // Address — the Sentinel Registry contract to report results to
+    Target,                // i128    — funding goal (stroops)
+    Deadline,              // u64     — end time (unix seconds)
+    Total,                 // i128    — total raised (stroops)
+    Claimed,               // bool    — whether the owner withdrew the funds
+    Contribution(Address), // i128    — per-donor contribution
 }
 
-/// Kampanya durumu (frontend için sayısal).
+/// Campaign status (numeric, for the frontend).
 #[contracttype]
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum State {
-    Running = 0, // süre devam ediyor
-    Success = 1, // süre bitti, hedefe ulaşıldı
-    Failed = 2,  // süre bitti, hedefe ulaşılamadı
+    Running = 0, // still accepting donations
+    Success = 1, // ended, goal reached
+    Failed = 2,  // ended, goal not reached
 }
 
-/// Hata tipleri.
+/// Error types.
 #[contracterror]
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 #[repr(u32)]
 pub enum Error {
     AlreadyInitialized = 1,
     NotInitialized = 2,
-    CampaignEnded = 3,   // deadline geçti, bağış kapalı
-    CampaignRunning = 4, // deadline gelmedi, claim/refund yok
+    CampaignEnded = 3,   // deadline passed, donations closed
+    CampaignRunning = 4, // deadline not reached yet, no claim/refund
     InvalidAmount = 5,
-    GoalNotReached = 6, // claim için hedef tutmadı
-    GoalReached = 7,    // refund yok, kampanya başarılı
+    GoalNotReached = 6, // goal wasn't met, claim not allowed
+    GoalReached = 7,    // goal was met, no refunds
     AlreadyClaimed = 8,
     NothingToRefund = 9,
 }
@@ -60,12 +61,12 @@ pub struct SentinelContract;
 
 #[contractimpl]
 impl SentinelContract {
-    /// Kampanyayı bir kez kurar.
-    /// - `recipient`: fonların gideceği sahip cüzdanı.
-    /// - `token`: bağış token'ı (testnet native XLM SAC adresi).
-    /// - `registry`: sonuçların bildirileceği Sentinel Registry sözleşmesi.
-    /// - `target`: hedef tutar (stroop; 1 XLM = 10_000_000 stroop).
-    /// - `deadline`: bitiş zamanı (unix saniye).
+    /// Sets up the campaign once.
+    /// - `recipient`: the owner's wallet the funds go to.
+    /// - `token`: the donation token (testnet native XLM SAC address).
+    /// - `registry`: the Sentinel Registry contract to report results to.
+    /// - `target`: the funding goal (stroops; 1 XLM = 10_000_000 stroops).
+    /// - `deadline`: the end time (unix seconds).
     pub fn initialize(
         env: Env,
         recipient: Address,
@@ -91,7 +92,7 @@ impl SentinelContract {
         Ok(())
     }
 
-    /// Bağış yapar: `amount` kadar token'ı bağışçıdan sözleşmeye aktarır.
+    /// Donates: transfers `amount` of the token from the donor to the contract.
     pub fn deposit(env: Env, donor: Address, amount: i128) -> Result<i128, Error> {
         Self::require_init(&env)?;
         donor.require_auth();
@@ -103,12 +104,12 @@ impl SentinelContract {
             return Err(Error::CampaignEnded);
         }
 
-        // Gerçek token transferi: donor -> sözleşme.
+        // Real token transfer: donor -> contract.
         let token_addr: Address = env.storage().instance().get(&DataKey::Token).unwrap();
         let token = token::Client::new(&env, &token_addr);
         token.transfer(&donor, &env.current_contract_address(), &amount);
 
-        // Toplam ve bağışçı katkısını güncelle.
+        // Update the running total and the donor's own contribution.
         let mut total = Self::total(&env);
         total += amount;
         env.storage().instance().set(&DataKey::Total, &total);
@@ -126,7 +127,7 @@ impl SentinelContract {
         Ok(total)
     }
 
-    /// Sahip, deadline sonrası hedefe ulaşıldıysa tüm fonu çeker.
+    /// The owner withdraws all funds after the deadline, if the goal was reached.
     pub fn claim(env: Env) -> Result<i128, Error> {
         Self::require_init(&env)?;
 
@@ -158,7 +159,7 @@ impl SentinelContract {
         Ok(balance)
     }
 
-    /// Bağışçı, deadline sonrası hedefe ulaşılamadıysa katkısını geri alır.
+    /// A donor gets their contribution back after the deadline, if the goal wasn't reached.
     pub fn refund(env: Env, donor: Address) -> Result<i128, Error> {
         Self::require_init(&env)?;
         donor.require_auth();
@@ -176,7 +177,7 @@ impl SentinelContract {
             return Err(Error::NothingToRefund);
         }
 
-        // Önce kaydı sıfırla (reentrancy'e karşı), sonra transfer et.
+        // Clear the record first (reentrancy guard), then transfer.
         env.storage().persistent().set(&key, &0i128);
 
         let token_addr: Address = env.storage().instance().get(&DataKey::Token).unwrap();
@@ -186,15 +187,16 @@ impl SentinelContract {
         env.events()
             .publish((symbol_short!("refund"), donor), amount);
 
-        // Kampanya nihai olarak başarısız oldu; registry'ye bildir (idempotent —
-        // sonraki her refund çağrısında tekrar bildirilse de registry tarafında yok sayılır).
+        // The campaign has finally failed; notify the registry (idempotent —
+        // even if every subsequent refund notifies it again, the registry
+        // ignores repeats).
         let recipient: Address = env.storage().instance().get(&DataKey::Recipient).unwrap();
         Self::notify_registry(&env, &recipient, Self::total(&env), Self::target(&env), false);
 
         Ok(amount)
     }
 
-    // ---------------- Görünümler (read-only) ----------------
+    // ---------------- Read-only views ----------------
 
     pub fn get_state(env: Env) -> State {
         if !env.storage().instance().has(&DataKey::Recipient) {
@@ -240,7 +242,7 @@ impl SentinelContract {
         env.storage().instance().get(&DataKey::Claimed).unwrap_or(false)
     }
 
-    // ---------------- Yardımcılar ----------------
+    // ---------------- Helpers ----------------
 
     fn require_init(env: &Env) -> Result<(), Error> {
         if env.storage().instance().has(&DataKey::Recipient) {
@@ -262,10 +264,10 @@ impl SentinelContract {
         env.storage().instance().get(&DataKey::Deadline).unwrap_or(0)
     }
 
-    /// Sentinel Registry sözleşmesine gerçek bir inter-contract call ile nihai
-    /// sonucu bildirir. Registry adresi çözümlü kod (statik client) yerine
-    /// `invoke_contract` ile dinamik çağrılır, böylece bu sözleşme registry'nin
-    /// crate'ine derleme zamanı bağımlı olmaz.
+    /// Reports the final outcome to the Sentinel Registry contract via a real
+    /// inter-contract call. The registry is called dynamically via
+    /// `invoke_contract` instead of a statically resolved client, so this
+    /// contract has no compile-time dependency on the registry's crate.
     fn notify_registry(env: &Env, recipient: &Address, total: i128, target: i128, success: bool) {
         let Some(registry): Option<Address> = env.storage().instance().get(&DataKey::Registry)
         else {
