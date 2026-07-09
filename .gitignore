@@ -1,0 +1,24 @@
+# Node / frontend
+node_modules/
+frontend/node_modules/
+dist/
+*.local
+
+# Ortam değişkenleri
+.env
+.env.*
+!.env.example
+
+# Rust / Soroban
+target/
+contract/target/
+**/*.rs.bk
+
+# Yedek / geçici
+**/.git_backup_frontend/
+
+# OS / editör
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea

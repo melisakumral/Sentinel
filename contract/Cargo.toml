@@ -1,0 +1,31 @@
+[package]
+name = "coresplit-contract"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "CoreSplit - Stellar/Soroban katkı havuzu sözleşmesi (donate / get_total / get_donation)"
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[dependencies]
+soroban-sdk = "22"
+
+[dev-dependencies]
+soroban-sdk = { version = "22", features = ["testutils"] }
+
+# Soroban için optimize edilmiş release profili (küçük .wasm çıktısı)
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true
