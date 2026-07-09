@@ -120,11 +120,11 @@ async function invoke(
   }
 
   let got = await server.getTransaction(sent.hash);
-  while ((got.status as string) === 'NOT_FOUND') {
+  while (got.status === rpc.Api.GetTransactionStatus.NOT_FOUND) {
     await new Promise((r) => setTimeout(r, 1500));
     got = await server.getTransaction(sent.hash);
   }
-  if ((got.status as string) !== 'SUCCESS') {
+  if (got.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
     throw new Error('İşlem zincirde başarısız oldu: ' + got.status);
   }
 

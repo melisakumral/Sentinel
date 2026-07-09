@@ -52,7 +52,7 @@ CoreSplit/
 
 ## 🛠️ Teknolojiler
 
-Rust + `soroban-sdk` v22 · React 19 + TypeScript + Vite · `@stellar/stellar-wallets-kit` · `stellar-sdk` (Soroban RPC) · Stellar Testnet.
+Rust + `soroban-sdk` v22 · React 19 + TypeScript + Vite · `@creit.tech/stellar-wallets-kit` · `stellar-sdk` (Soroban RPC) · Stellar Testnet.
 
 ## 🚀 Baştan Sona Kurulum
 

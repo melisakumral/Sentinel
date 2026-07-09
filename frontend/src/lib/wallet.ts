@@ -5,7 +5,7 @@ import {
   allowAllModules,
   FREIGHTER_ID,
   type ISupportedWallet,
-} from '@stellar/stellar-wallets-kit';
+} from '@creit.tech/stellar-wallets-kit';
 
 export const kit = new StellarWalletsKit({
   network: WalletNetwork.TESTNET,
