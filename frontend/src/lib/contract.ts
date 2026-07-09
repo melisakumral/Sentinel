@@ -1,5 +1,5 @@
-// Sentinel Crowdfunding sözleşmesi ile konuşan yardımcılar.
-// Okuma -> simülasyon. Yazma (deposit/claim/refund) -> prepare + imzala + gönder + onay bekle.
+// Helpers that talk to the Sentinel Crowdfunding contract.
+// Reads -> simulation. Writes (deposit/claim/refund) -> prepare + sign + send + await confirmation.
 import {
   rpc,
   Contract,
@@ -9,6 +9,7 @@ import {
   nativeToScVal,
   scValToNative,
   Address,
+  Asset,
 } from 'stellar-sdk';
 import { kit, WalletNetwork } from './wallet';
 
@@ -16,15 +17,19 @@ export const CONTRACT_ID = import.meta.env.VITE_CONTRACT_ID as string | undefine
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
 
-// Saf (bağımlılıksız, test edilebilir) stroop <-> XLM dönüşümü `stroops.ts`'e taşındı.
+// Pure (dependency-free, testable) stroop <-> XLM conversion lives in `stroops.ts`.
 export { STROOPS_PER_XLM, toStroops, fromStroops } from './stroops';
 
 const server = new rpc.Server(RPC_URL);
 
+// Native XLM is itself a Stellar Asset Contract (SAC) on Soroban; its contract
+// id is derived deterministically, no network round-trip needed.
+const NATIVE_TOKEN_ID = Asset.native().contractId(NETWORK_PASSPHRASE);
+
 function requireContractId(): string {
   if (!CONTRACT_ID) {
     throw new Error(
-      'VITE_CONTRACT_ID tanımlı değil. frontend/.env dosyasına deploy sonrası aldığın Contract ID (C...) değerini ekle.',
+      'VITE_CONTRACT_ID is not set. Add the Contract ID (C...) you got after deploying to frontend/.env.',
     );
   }
   return CONTRACT_ID;
@@ -33,11 +38,10 @@ function requireContractId(): string {
 const i128 = (v: bigint) => nativeToScVal(v, { type: 'i128' });
 const addr = (a: string) => new Address(a).toScVal();
 
-// --- Genel okuma (simülasyon) ---
-async function simRead(sourceAddress: string, fn: string, args: any[] = []): Promise<any> {
-  const id = requireContractId();
+// --- Generic read (simulation) against an arbitrary contract ---
+async function simReadOn(contractId: string, sourceAddress: string, fn: string, args: any[] = []): Promise<any> {
   const account = await server.getAccount(sourceAddress);
-  const contract = new Contract(id);
+  const contract = new Contract(contractId);
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
     networkPassphrase: NETWORK_PASSPHRASE,
@@ -48,21 +52,34 @@ async function simRead(sourceAddress: string, fn: string, args: any[] = []): Pro
 
   const sim = await server.simulateTransaction(tx);
   if (rpc.Api.isSimulationError(sim)) {
-    throw new Error(`Simülasyon hatası (${fn}): ${sim.error}`);
+    throw new Error(`Simulation failed (${fn}): ${sim.error}`);
   }
   return scValToNative(sim.result!.retval);
+}
+
+// --- Read against the campaign contract ---
+function simRead(sourceAddress: string, fn: string, args: any[] = []): Promise<any> {
+  return simReadOn(requireContractId(), sourceAddress, fn, args);
+}
+
+// Level 1 requirement: fetch the connected wallet's own native XLM balance
+// (independent of any campaign contribution) by simulating a `balance` call
+// against the native XLM SAC.
+export async function getXlmBalance(address: string): Promise<bigint> {
+  const raw = await simReadOn(NATIVE_TOKEN_ID, address, 'balance', [addr(address)]);
+  return BigInt(raw ?? 0);
 }
 
 export interface Campaign {
   total: bigint;
   target: bigint;
-  deadline: bigint; // unix saniye
+  deadline: bigint; // unix seconds
   recipient: string | null;
   claimed: boolean;
-  contribution: bigint; // bağlı cüzdanın katkısı
+  contribution: bigint; // the connected wallet's own contribution
 }
 
-// Tüm kampanya durumunu tek seferde çeker (canlı takip için).
+// Fetches the full campaign state in one shot (for live tracking).
 export async function getCampaign(sourceAddress: string): Promise<Campaign> {
   const [total, target, deadline, recipient, claimed, contribution] = await Promise.all([
     simRead(sourceAddress, 'get_total'),
@@ -82,7 +99,7 @@ export async function getCampaign(sourceAddress: string): Promise<Campaign> {
   };
 }
 
-// --- Genel yazma: prepare + imzala + gönder + onay bekle ---
+// --- Generic write: prepare + sign + submit + await confirmation ---
 async function invoke(
   sourceAddress: string,
   fn: string,
@@ -100,7 +117,7 @@ async function invoke(
     .setTimeout(30)
     .build();
 
-  // Soroban footprint + auth hazırlığı. Yetersiz bakiye vb. burada da yakalanır.
+  // Prepares the Soroban footprint + auth. Insufficient-balance etc. also surface here.
   tx = await server.prepareTransaction(tx);
 
   const { signedTxXdr } = await kit.signTransaction(tx.toXDR(), {
@@ -112,7 +129,7 @@ async function invoke(
   const sent = await server.sendTransaction(signed);
 
   if ((sent.status as string) === 'ERROR') {
-    throw new Error('İşlem ağa gönderilemedi: ' + JSON.stringify(sent.errorResult));
+    throw new Error('Transaction could not be submitted to the network: ' + JSON.stringify(sent.errorResult));
   }
 
   let got = await server.getTransaction(sent.hash);
@@ -121,14 +138,14 @@ async function invoke(
     got = await server.getTransaction(sent.hash);
   }
   if (got.status !== rpc.Api.GetTransactionStatus.SUCCESS) {
-    throw new Error('İşlem zincirde başarısız oldu: ' + got.status);
+    throw new Error('Transaction failed on-chain: ' + got.status);
   }
 
   const returnValue = got.returnValue ? scValToNative(got.returnValue) : null;
   return { hash: sent.hash, returnValue };
 }
 
-// --- Yazma fonksiyonları ---
+// --- Write functions ---
 export function deposit(donor: string, amountStroops: bigint) {
   return invoke(donor, 'deposit', [addr(donor), i128(amountStroops)]);
 }
@@ -141,9 +158,9 @@ export function refund(donor: string) {
   return invoke(donor, 'refund', [addr(donor)]);
 }
 
-// --- Gerçek zamanlı olay akışı (event streaming) ---
-// Kontrat deposit/claim/refund sırasında zincire event yayınlar (bkz. contract/src/lib.rs).
-// Frontend bu event'leri Soroban RPC `getEvents` ile dinleyerek bir aktivite akışı gösterir.
+// --- Real-time event streaming ---
+// The contract publishes an event on deposit/claim/refund (see contract/src/lib.rs).
+// The frontend listens for these via the Soroban RPC `getEvents` to power a live activity feed.
 export interface ActivityEvent {
   id: string;
   type: 'deposit' | 'claim' | 'refund';
@@ -159,7 +176,7 @@ export async function getLatestLedger(): Promise<number> {
 
 const EVENT_TYPES = new Set(['deposit', 'claim', 'refund']);
 
-// `sinceLedger` (dahil) itibarıyla yeni kontrat event'lerini döner.
+// Returns new contract events starting at (and including) `sinceLedger`.
 export async function getRecentEvents(
   sinceLedger: number,
 ): Promise<{ events: ActivityEvent[]; latestLedger: number }> {

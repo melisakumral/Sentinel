@@ -1,4 +1,4 @@
-// Çoklu cüzdan desteği için StellarWalletsKit yapılandırması + hata sınıflandırma.
+// StellarWalletsKit setup for multi-wallet support (Freighter and others), Stellar Testnet.
 import {
   StellarWalletsKit,
   WalletNetwork,
@@ -15,11 +15,11 @@ export const kit = new StellarWalletsKit({
 
 export { WalletNetwork };
 
-// Kurulu/erişilebilir cüzdanları döner (yoksa "wallet not found" için kullanılır).
+// Returns installed/available wallets (used to detect the "wallet not found" case).
 export async function getAvailableWallets(): Promise<ISupportedWallet[]> {
   const wallets = await kit.getSupportedWallets();
   return wallets.filter((w) => w.isAvailable);
 }
 
-// Saf (bağımlılıksız, test edilebilir) hata sınıflandırması `errors.ts`'e taşındı.
+// Pure (dependency-free, testable) error classification lives in `errors.ts`.
 export { classifyError, type AppError, type AppErrorType } from './errors';

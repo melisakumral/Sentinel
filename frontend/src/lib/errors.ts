@@ -1,5 +1,5 @@
-// Cüzdan/işlem hatalarını 3 ana tipe (+unknown) sınıflandırır. Bağımlılığı yok,
-// izole test edilebilir.
+// Classifies wallet/transaction errors into 3 main types (+ unknown). No
+// dependencies, tested in isolation.
 export type AppErrorType =
   | 'wallet_not_found'
   | 'user_rejected'
@@ -17,7 +17,7 @@ export function classifyError(e: unknown): AppError {
     (typeof e === 'string' ? e : JSON.stringify(e ?? ''));
   const msg = (raw || '').toLowerCase();
 
-  // 1) Cüzdan bulunamadı / kurulu değil
+  // 1) Wallet not found / not installed
   if (
     msg.includes('not found') ||
     msg.includes('no wallet') ||
@@ -27,11 +27,11 @@ export function classifyError(e: unknown): AppError {
   ) {
     return {
       type: 'wallet_not_found',
-      message: 'Cüzdan bulunamadı. Lütfen Freighter (veya desteklenen bir cüzdan) kur ve tekrar dene.',
+      message: 'Wallet not found. Please install Freighter (or another supported wallet) and try again.',
     };
   }
 
-  // 2) Kullanıcı işlemi reddetti
+  // 2) User rejected the transaction
   if (
     msg.includes('reject') ||
     msg.includes('denied') ||
@@ -41,26 +41,26 @@ export function classifyError(e: unknown): AppError {
   ) {
     return {
       type: 'user_rejected',
-      message: 'İşlem cüzdanda reddedildi.',
+      message: 'The transaction was rejected in your wallet.',
     };
   }
 
-  // 3) Yetersiz bakiye
+  // 3) Insufficient balance
   if (
     msg.includes('insufficient') ||
     msg.includes('underfunded') ||
     msg.includes('balance is not sufficient') ||
     msg.includes('not enough') ||
-    msg.includes('#10') // token: insufficient balance kontrat hatası
+    msg.includes('#10') // token contract error: insufficient balance
   ) {
     return {
       type: 'insufficient_balance',
-      message: 'Yetersiz bakiye. Cüzdanında yeterli test XLM olduğundan emin ol (Friendbot ile fonla).',
+      message: 'Insufficient balance. Make sure your wallet has enough test XLM (fund it via Friendbot).',
     };
   }
 
   return {
     type: 'unknown',
-    message: raw || 'Bilinmeyen bir hata oluştu.',
+    message: raw || 'An unknown error occurred.',
   };
 }

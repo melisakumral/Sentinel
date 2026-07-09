@@ -1,7 +1,7 @@
 # docs
 
-Teslim için buraya ekran görüntülerini koy:
+Put screenshots here for submission:
 
-- `wallet-options.png` — cüzdan seçim modalının açık hali (mevcut cüzdanlar görünür).
+- `wallet-options.png` — the wallet-selection modal open (available wallets visible).
 
-README'deki "Ekran görüntüsü: cüzdan seçenekleri" gereksinimi için kullanılır.
+Used for the "Screenshot: wallet options" requirement in the README.

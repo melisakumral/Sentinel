@@ -1,5 +1,74 @@
-/* Mobil responsive ayarlar. App.tsx büyük ölçüde inline style kullanır;
-   media query gerektiren tek noktalar burada. */
+/* App.tsx mostly uses inline styles; this file covers what inline styles
+   can't do: hover/active states and mobile media queries. */
+
+.app-card {
+  animation: card-in 0.35s ease-out;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.btn {
+  transition: transform 0.12s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.btn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.5);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.96);
+}
+.btn:disabled {
+  cursor: not-allowed;
+}
+
+.balance-pill {
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.stat-card {
+  transition: border-color 0.2s ease;
+}
+.stat-card:hover {
+  border-color: #475569;
+}
+
+.progress-fill {
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.activity-row {
+  animation: row-in 0.25s ease-out;
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tx-link {
+  transition: opacity 0.15s ease;
+}
+.tx-link:hover {
+  opacity: 0.75;
+}
+
 @media (max-width: 480px) {
   .app-shell {
     padding: 20px 12px !important;
@@ -11,5 +80,10 @@
   .conn-row {
     flex-direction: column;
     align-items: flex-start !important;
+  }
+  .balance-row {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 12px !important;
   }
 }

@@ -4,6 +4,7 @@ import { kit, getAvailableWallets, classifyError } from './lib/wallet';
 import {
   CONTRACT_ID,
   getCampaign,
+  getXlmBalance,
   deposit,
   claim,
   refund,
@@ -17,13 +18,15 @@ import {
 
 type TxState = 'idle' | 'pending' | 'success' | 'fail';
 
-// Testnet event retention'ı içinde kalacak makul bir geriye bakış penceresi.
+// A lookback window that stays comfortably inside testnet's event retention.
 const EVENT_LOOKBACK_LEDGERS = 400;
 const MAX_ACTIVITY_ITEMS = 8;
 
 function App() {
   const [pubKey, setPubKey] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+
+  const [xlmBalance, setXlmBalance] = useState<bigint | null>(null);
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [loadingCampaign, setLoadingCampaign] = useState(false);
@@ -38,7 +41,7 @@ function App() {
 
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
 
-  // --- Cüzdan bağlama (3 hata tipi burada yakalanır) ---
+  // --- Connect wallet (all 3 error types are caught here) ---
   const connectWallet = async () => {
     setConnecting(true);
     setMessage('');
@@ -78,9 +81,10 @@ function App() {
     try {
       await kit.disconnect();
     } catch {
-      /* yok say */
+      /* ignore */
     }
     setPubKey(null);
+    setXlmBalance(null);
     setCampaign(null);
     setEvents([]);
     nextLedgerRef.current = null;
@@ -89,7 +93,17 @@ function App() {
     setTxHash(null);
   };
 
-  // --- Kampanya verisini çek (canlı takip) ---
+  // --- Fetch the connected wallet's own native XLM balance (Level 1) ---
+  const refreshBalance = useCallback(async (address: string) => {
+    try {
+      const balance = await getXlmBalance(address);
+      setXlmBalance(balance);
+    } catch (e) {
+      console.error('balance fetch', e);
+    }
+  }, []);
+
+  // --- Fetch campaign state (live tracking) ---
   const refresh = useCallback(async (address: string) => {
     if (!CONTRACT_ID) return;
     setLoadingCampaign((prev) => prev || true);
@@ -103,9 +117,9 @@ function App() {
     }
   }, []);
 
-  // --- Olay akışı (event streaming): kontratın yayınladığı deposit/claim/refund
-  // event'lerini Soroban RPC getEvents ile dinler, gerçek zamanlı bir aktivite
-  // listesi oluşturur (state polling'e ek, ondan bağımsız bir kanal).
+  // --- Event streaming: listens for the deposit/claim/refund events the
+  // contract publishes via the Soroban RPC getEvents, building a real-time
+  // activity feed (a channel independent of, and in addition to, state polling).
   const pollEvents = useCallback(async () => {
     if (!CONTRACT_ID) return;
     try {
@@ -129,23 +143,26 @@ function App() {
 
   useEffect(() => {
     if (!pubKey) return;
+    refreshBalance(pubKey);
     refresh(pubKey);
     pollEvents();
-    const stateId = setInterval(() => refresh(pubKey), 8000); // her 8 sn canlı durum güncelle
-    const eventId = setInterval(pollEvents, 6000); // her 6 sn yeni event kontrolü
+    const balanceId = setInterval(() => refreshBalance(pubKey), 8000);
+    const stateId = setInterval(() => refresh(pubKey), 8000); // live state refresh every 8s
+    const eventId = setInterval(pollEvents, 6000); // check for new events every 6s
     return () => {
+      clearInterval(balanceId);
       clearInterval(stateId);
       clearInterval(eventId);
     };
-  }, [pubKey, refresh, pollEvents]);
+  }, [pubKey, refresh, refreshBalance, pollEvents]);
 
-  // Geri sayım için saniye sayacı.
+  // Second-by-second tick for the countdown.
   useEffect(() => {
     const id = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
     return () => clearInterval(id);
   }, []);
 
-  // --- Yazma işlemleri (ortak sarmalayıcı) ---
+  // --- Write transactions (shared wrapper) ---
   const runTx = async (fn: () => Promise<{ hash: string }>, pendingMsg: string, okMsg: string) => {
     setTx('pending');
     setMessage(pendingMsg);
@@ -155,7 +172,9 @@ function App() {
       setTxHash(hash);
       setTx('success');
       setMessage(okMsg);
-      if (pubKey) await refresh(pubKey);
+      if (pubKey) {
+        await Promise.all([refresh(pubKey), refreshBalance(pubKey)]);
+      }
     } catch (e) {
       const err = classifyError(e);
       setTx('fail');
@@ -169,19 +188,19 @@ function App() {
     const val = Number(amount);
     if (!Number.isFinite(val) || val <= 0) {
       setTx('fail');
-      setMessage('Lütfen pozitif bir miktar gir.');
+      setMessage('Please enter a positive amount.');
       return;
     }
-    runTx(() => deposit(pubKey, toStroops(val)), 'Bağış imzalanıyor ve gönderiliyor...', 'Bağışın kaydedildi!');
+    runTx(() => deposit(pubKey, toStroops(val)), 'Signing and sending your donation...', 'Your donation was recorded!');
   };
 
   const handleClaim = () =>
-    pubKey && runTx(() => claim(pubKey), 'Fonlar çekiliyor...', 'Fonlar sahibin cüzdanına aktarıldı!');
+    pubKey && runTx(() => claim(pubKey), 'Withdrawing funds...', 'Funds were transferred to the owner’s wallet!');
 
   const handleRefund = () =>
-    pubKey && runTx(() => refund(pubKey), 'İade işleniyor...', 'İaden cüzdanına gönderildi!');
+    pubKey && runTx(() => refund(pubKey), 'Processing refund...', 'Your refund was sent to your wallet!');
 
-  // --- Türetilmiş durum ---
+  // --- Derived state ---
   const short = (k: string) => `${k.slice(0, 6)}...${k.slice(-6)}`;
   const deadline = campaign ? Number(campaign.deadline) : 0;
   const initialized = deadline > 0;
@@ -203,21 +222,21 @@ function App() {
   const myContribution = campaign ? campaign.contribution : 0n;
 
   const fmtCountdown = (secs: number) => {
-    if (secs <= 0) return 'Süre doldu';
+    if (secs <= 0) return 'Ended';
     const d = Math.floor(secs / 86400);
     const h = Math.floor((secs % 86400) / 3600);
     const m = Math.floor((secs % 3600) / 60);
     const s = secs % 60;
-    if (d > 0) return `${d}g ${h}s ${m}dk`;
-    if (h > 0) return `${h}s ${m}dk ${s}sn`;
-    return `${m}dk ${s}sn`;
+    if (d > 0) return `${d}d ${h}h ${m}m`;
+    if (h > 0) return `${h}h ${m}m ${s}s`;
+    return `${m}m ${s}s`;
   };
 
   const stateBadge = {
-    none: { t: 'BAŞLATILMADI', c: '#94a3b8' },
-    running: { t: 'AKTİF', c: '#38bdf8' },
-    success: { t: 'BAŞARILI', c: '#10b981' },
-    failed: { t: 'BAŞARISIZ', c: '#ef4444' },
+    none: { t: 'NOT STARTED', c: '#94a3b8' },
+    running: { t: 'ACTIVE', c: '#38bdf8' },
+    success: { t: 'SUCCESSFUL', c: '#10b981' },
+    failed: { t: 'FAILED', c: '#ef4444' },
   }[state];
 
   const msgColor =
@@ -254,6 +273,8 @@ function App() {
       style={{
         minHeight: '100vh',
         backgroundColor: '#0f172a',
+        backgroundImage:
+          'radial-gradient(circle at 15% -10%, rgba(56,189,248,0.12), transparent 45%), radial-gradient(circle at 85% 0%, rgba(16,185,129,0.10), transparent 40%)',
         color: '#f8fafc',
         fontFamily: 'system-ui, sans-serif',
         padding: '40px 20px',
@@ -278,7 +299,7 @@ function App() {
       >
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '26px', fontWeight: 800, margin: 0, color: '#38bdf8', letterSpacing: '-1px' }}>
-            Sentinel <span style={{ fontSize: '14px', color: '#94a3b8' }}>Crowdfunding</span>
+            🪐 Sentinel <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 500 }}>Crowdfunding</span>
           </h1>
           <span
             style={{
@@ -294,7 +315,7 @@ function App() {
           </span>
         </div>
         <p style={{ color: '#94a3b8', fontSize: '13px', margin: '6px 0 22px' }}>
-          Merkeziyetsiz kitle fonlama · Stellar Testnet
+          Decentralized crowdfunding · Stellar Testnet
         </p>
 
         {!CONTRACT_ID && (
@@ -309,13 +330,14 @@ function App() {
               marginBottom: '20px',
             }}
           >
-            ⚠️ <strong>VITE_CONTRACT_ID</strong> tanımlı değil. Deploy sonrası{' '}
-            <code>frontend/.env</code> içine Contract ID ekle.
+            ⚠️ <strong>VITE_CONTRACT_ID</strong> is not set. After deploying, add the Contract ID to{' '}
+            <code>frontend/.env</code>.
           </div>
         )}
 
         {!pubKey ? (
           <button
+            className="btn"
             onClick={connectWallet}
             disabled={connecting}
             style={{
@@ -330,35 +352,82 @@ function App() {
               cursor: 'pointer',
             }}
           >
-            {connecting ? 'Cüzdan seçiliyor...' : 'Cüzdan Bağla'}
+            {connecting ? 'Selecting wallet...' : '🔌 Connect Wallet'}
           </button>
         ) : (
           <>
-            {/* Bağlantı */}
+            {/* Connection */}
             <div
               className="conn-row"
               style={{ ...card, marginBottom: '18px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}
             >
               <div>
-                <div style={{ color: '#10b981', fontSize: '11px', fontWeight: 'bold' }}>● BAĞLANDI</div>
+                <div style={{ color: '#10b981', fontSize: '11px', fontWeight: 'bold' }}>● CONNECTED</div>
                 <div style={{ fontSize: '12px', color: '#64748b', fontFamily: 'monospace', marginTop: '4px' }}>
                   {short(pubKey)}
-                  {isRecipient && <span style={{ color: '#38bdf8' }}> · sahip</span>}
+                  {isRecipient && <span style={{ color: '#38bdf8' }}> · owner</span>}
                 </div>
               </div>
               <button
+                className="btn"
                 onClick={disconnect}
                 style={{ background: 'none', border: '1px solid #334155', color: '#94a3b8', fontSize: '11px', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}
               >
-                Çıkış
+                Disconnect
               </button>
             </div>
 
-            {/* İlerleme */}
-            <div style={{ ...card, marginBottom: '18px' }}>
+            {/* Wallet balance (Level 1: fetch + clearly display the connected wallet's XLM balance) */}
+            <div
+              className="balance-row stat-card"
+              style={{
+                ...card,
+                marginBottom: '18px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, rgba(56,189,248,0.08), rgba(16,185,129,0.05))',
+                borderColor: '#334155',
+              }}
+            >
+              <div>
+                <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  💳 WALLET BALANCE
+                </div>
+                <div style={{ fontSize: '26px', fontWeight: 800, marginTop: '4px' }}>
+                  {xlmBalance === null ? (
+                    <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 400 }}>Loading…</span>
+                  ) : (
+                    <>
+                      {fromStroops(xlmBalance).toFixed(2)} <span style={{ fontSize: '14px', color: '#94a3b8' }}>XLM</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              <a
+                href="https://friendbot.stellar.org"
+                target="_blank"
+                rel="noreferrer"
+                className="balance-pill"
+                style={{
+                  fontSize: '11px',
+                  color: '#38bdf8',
+                  border: '1px solid #334155',
+                  borderRadius: '20px',
+                  padding: '6px 12px',
+                  textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                🚰 Get test XLM
+              </a>
+            </div>
+
+            {/* Progress */}
+            <div className="stat-card" style={{ ...card, marginBottom: '18px' }}>
               {loadingCampaign && !campaign ? (
                 <div style={{ fontSize: '13px', color: '#94a3b8', padding: '6px 0' }}>
-                  ⏳ Kampanya verisi yükleniyor…
+                  ⏳ Loading campaign data…
                 </div>
               ) : (
                 <>
@@ -369,38 +438,38 @@ function App() {
                         / {fromStroops(target).toFixed(2)} XLM
                       </span>
                     </span>
-                    <span style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 700 }}>%{progress.toFixed(0)}</span>
+                    <span style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 700 }}>{progress.toFixed(0)}%</span>
                   </div>
                   <div style={{ height: '10px', background: '#0b1220', borderRadius: '6px', overflow: 'hidden', border: '1px solid #334155' }}>
                     <div
+                      className="progress-fill"
                       style={{
                         width: `${progress}%`,
                         height: '100%',
                         background: state === 'failed' ? '#ef4444' : state === 'success' ? '#10b981' : '#38bdf8',
-                        transition: 'width 0.5s',
                       }}
                     />
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'space-between', marginTop: '12px', fontSize: '12px', color: '#94a3b8' }}>
-                    <span>⏳ {initialized ? (running ? fmtCountdown(deadline - now) : 'Süre doldu') : '—'}</span>
-                    <span>Senin katkın: <strong style={{ color: '#f8fafc' }}>{fromStroops(myContribution).toFixed(2)} XLM</strong></span>
+                    <span>⏳ {initialized ? (running ? fmtCountdown(deadline - now) : 'Ended') : '—'}</span>
+                    <span>Your contribution: <strong style={{ color: '#f8fafc' }}>{fromStroops(myContribution).toFixed(2)} XLM</strong></span>
                   </div>
                 </>
               )}
             </div>
 
-            {/* Aktivite akışı (gerçek zamanlı event streaming) */}
+            {/* Activity feed (real-time event streaming) */}
             {events.length > 0 && (
               <div style={{ ...card, marginBottom: '18px' }}>
                 <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '10px', letterSpacing: '0.5px' }}>
-                  🔴 CANLI AKTİVİTE
+                  🔴 LIVE ACTIVITY
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
                   {events.map((e) => (
-                    <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                    <div key={e.id} className="activity-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                       <span style={{ color: '#cbd5e1' }}>
                         {{ deposit: '💰', claim: '✅', refund: '↩️' }[e.type]}{' '}
-                        {{ deposit: 'Bağış', claim: 'Çekim', refund: 'İade' }[e.type]}
+                        {{ deposit: 'Donation', claim: 'Claim', refund: 'Refund' }[e.type]}
                         {' · '}
                         <span style={{ fontFamily: 'monospace', color: '#64748b' }}>{short(e.actor)}</span>
                       </span>
@@ -411,20 +480,21 @@ function App() {
               </div>
             )}
 
-            {/* Aksiyonlar */}
+            {/* Actions */}
             {state === 'running' && (
               <>
                 <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '5px' }}>
-                  Bağış Miktarı (XLM)
+                  Donation Amount (XLM)
                 </label>
                 <input
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   style={{ ...input, marginBottom: '14px' }}
-                  placeholder="Örn: 10"
+                  placeholder="e.g. 10"
                 />
                 <button
+                  className="btn"
                   onClick={handleDeposit}
                   disabled={tx === 'pending' || !CONTRACT_ID}
                   style={{
@@ -439,13 +509,14 @@ function App() {
                     cursor: tx === 'pending' ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {tx === 'pending' ? 'İşleniyor...' : 'Bağış Yap'}
+                  {tx === 'pending' ? 'Processing...' : 'Donate'}
                 </button>
               </>
             )}
 
             {state === 'success' && (
               <button
+                className="btn"
                 onClick={handleClaim}
                 disabled={tx === 'pending' || !isRecipient || campaign?.claimed}
                 style={{
@@ -459,18 +530,19 @@ function App() {
                   borderRadius: '12px',
                   cursor: !isRecipient || campaign?.claimed ? 'not-allowed' : 'pointer',
                 }}
-                title={!isRecipient ? 'Sadece kampanya sahibi çekebilir' : ''}
+                title={!isRecipient ? 'Only the campaign owner can withdraw' : ''}
               >
                 {campaign?.claimed
-                  ? '✅ Fonlar çekildi'
+                  ? '✅ Funds withdrawn'
                   : isRecipient
-                    ? 'Fonları Çek (claim)'
-                    : 'Kampanya başarılı · fonları sahip çeker'}
+                    ? 'Withdraw Funds (claim)'
+                    : 'Campaign successful · owner will withdraw'}
               </button>
             )}
 
             {state === 'failed' && (
               <button
+                className="btn"
                 onClick={handleRefund}
                 disabled={tx === 'pending' || myContribution <= 0n}
                 style={{
@@ -485,11 +557,11 @@ function App() {
                   cursor: myContribution > 0n ? 'pointer' : 'not-allowed',
                 }}
               >
-                {myContribution > 0n ? 'İadeni Al (refund)' : 'İade edilecek katkın yok'}
+                {myContribution > 0n ? 'Get Your Refund (refund)' : 'No contribution to refund'}
               </button>
             )}
 
-            {/* İşlem durumu */}
+            {/* Transaction status */}
             {tx !== 'idle' && message && (
               <div
                 style={{
@@ -503,9 +575,9 @@ function App() {
                 }}
               >
                 <div style={{ fontWeight: 'bold' }}>
-                  {tx === 'pending' && '⏳ İşlem bekleniyor...'}
-                  {tx === 'success' && '✅ Başarılı'}
-                  {tx === 'fail' && '❌ Hata'}
+                  {tx === 'pending' && '⏳ Transaction pending...'}
+                  {tx === 'success' && '✅ Success'}
+                  {tx === 'fail' && '❌ Error'}
                 </div>
                 <div style={{ marginTop: '4px', wordBreak: 'break-word' }}>{message}</div>
                 {txHash && (
@@ -515,6 +587,7 @@ function App() {
                       href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
                       target="_blank"
                       rel="noreferrer"
+                      className="tx-link"
                       style={{ color: '#38bdf8' }}
                     >
                       {short(txHash)}
@@ -528,7 +601,7 @@ function App() {
       </div>
 
       <p style={{ color: '#475569', fontSize: '12px', marginTop: '18px' }}>
-        Contract: {CONTRACT_ID ? short(CONTRACT_ID) : 'tanımsız'} · Ağ: Testnet
+        Contract: {CONTRACT_ID ? short(CONTRACT_ID) : 'not set'} · Network: Testnet
       </p>
     </div>
   );
