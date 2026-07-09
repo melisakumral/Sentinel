@@ -1,6 +1,6 @@
 # 🪐 Sentinel — Merkeziyetsiz Kitle Fonlama (Crowdfunding)
 
-![CI](https://github.com/melisakumral/CoreSplit/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/melisakumral/Sentinel/actions/workflows/ci.yml/badge.svg)
 
 Sentinel, Stellar/Soroban üzerinde çalışan bir **kitle fonlama** dApp'idir. Proje sahibi bir hedef tutar ve süre belirler; bağışçılar cüzdanlarını bağlayıp doğrudan sözleşmeye XLM gönderir. Süre dolduğunda:
 
@@ -55,7 +55,7 @@ Her iki durumda da kampanya sözleşmesi, nihai sonucu ayrı bir **Sentinel Regi
 | Kontrat + frontend testleri | ✅ 8 Rust testi (`cargo test --workspace`) + 7 Vitest testi (`npm run test`) = **15 test** |
 | Production-ready mimari | ✅ Cargo workspace, saf/test edilebilir modüller (`stroops.ts`, `errors.ts`), CI |
 | Dokümantasyon & demo sunumu | ✅ Bu README + aşağıdaki teslim bilgileri |
-| Public GitHub repo | ✅ https://github.com/melisakumral/CoreSplit |
+| Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
 | 10+ anlamlı commit | ✅ Git geçmişine bak |
 | Canlı demo linki (Vercel vb.) | ⬜ Manuel — bkz. "Kalan Manuel Adımlar" |
 | Ekran görüntüleri (mobil, CI, test çıktısı) | ⬜ Manuel — bkz. "Kalan Manuel Adımlar" |
