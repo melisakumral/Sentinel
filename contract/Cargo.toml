@@ -18,7 +18,6 @@ soroban-sdk = "22"
 
 [dev-dependencies]
 soroban-sdk = { version = "22", features = ["testutils"] }
-sentinel-registry = { path = "registry" }
 
 # Soroban için optimize edilmiş release profili (küçük .wasm çıktısı)
 [profile.release]

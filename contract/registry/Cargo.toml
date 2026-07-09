@@ -6,7 +6,7 @@ publish = false
 description = "Sentinel - kampanya sonuçlarını kaydeden registry sözleşmesi (inter-contract call hedefi)"
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["cdylib"]
 doctest = false
 
 [dependencies]
