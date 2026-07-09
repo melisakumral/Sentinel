@@ -140,3 +140,49 @@ export function claim(recipient: string) {
 export function refund(donor: string) {
   return invoke(donor, 'refund', [addr(donor)]);
 }
+
+// --- Gerçek zamanlı olay akışı (event streaming) ---
+// Kontrat deposit/claim/refund sırasında zincire event yayınlar (bkz. contract/src/lib.rs).
+// Frontend bu event'leri Soroban RPC `getEvents` ile dinleyerek bir aktivite akışı gösterir.
+export interface ActivityEvent {
+  id: string;
+  type: 'deposit' | 'claim' | 'refund';
+  actor: string;
+  amount: bigint;
+  ledger: number;
+}
+
+export async function getLatestLedger(): Promise<number> {
+  const { sequence } = await server.getLatestLedger();
+  return sequence;
+}
+
+const EVENT_TYPES = new Set(['deposit', 'claim', 'refund']);
+
+// `sinceLedger` (dahil) itibarıyla yeni kontrat event'lerini döner.
+export async function getRecentEvents(
+  sinceLedger: number,
+): Promise<{ events: ActivityEvent[]; latestLedger: number }> {
+  const id = requireContractId();
+  const resp = await server.getEvents({
+    startLedger: sinceLedger,
+    filters: [{ type: 'contract', contractIds: [id] }],
+  });
+
+  const events: ActivityEvent[] = [];
+  for (const e of resp.events) {
+    const topics = e.topic.map((t) => scValToNative(t));
+    const kind = topics[0];
+    if (typeof kind !== 'string' || !EVENT_TYPES.has(kind)) continue;
+    const actor = topics[1] ? String(topics[1]) : '';
+    const value = scValToNative(e.value);
+    events.push({
+      id: `${e.ledger}-${e.id}`,
+      type: kind as ActivityEvent['type'],
+      actor,
+      amount: BigInt(value ?? 0),
+      ledger: e.ledger,
+    });
+  }
+  return { events, latestLedger: resp.latestLedger };
+}

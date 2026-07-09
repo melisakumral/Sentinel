@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback, type CSSProperties } from 'react';
+import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
+import './App.css';
 import { kit, getAvailableWallets, classifyError } from './lib/wallet';
 import {
   CONTRACT_ID,
@@ -8,21 +9,32 @@ import {
   refund,
   toStroops,
   fromStroops,
+  getLatestLedger,
+  getRecentEvents,
   type Campaign,
+  type ActivityEvent,
 } from './lib/contract';
 
 type TxState = 'idle' | 'pending' | 'success' | 'fail';
+
+// Testnet event retention'ı içinde kalacak makul bir geriye bakış penceresi.
+const EVENT_LOOKBACK_LEDGERS = 400;
+const MAX_ACTIVITY_ITEMS = 8;
 
 function App() {
   const [pubKey, setPubKey] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
 
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [loadingCampaign, setLoadingCampaign] = useState(false);
   const [amount, setAmount] = useState('10');
 
   const [tx, setTx] = useState<TxState>('idle');
   const [message, setMessage] = useState('');
   const [txHash, setTxHash] = useState<string | null>(null);
+
+  const [events, setEvents] = useState<ActivityEvent[]>([]);
+  const nextLedgerRef = useRef<number | null>(null);
 
   const [now, setNow] = useState(Math.floor(Date.now() / 1000));
 
@@ -70,6 +82,8 @@ function App() {
     }
     setPubKey(null);
     setCampaign(null);
+    setEvents([]);
+    nextLedgerRef.current = null;
     setTx('idle');
     setMessage('');
     setTxHash(null);
@@ -78,20 +92,52 @@ function App() {
   // --- Kampanya verisini çek (canlı takip) ---
   const refresh = useCallback(async (address: string) => {
     if (!CONTRACT_ID) return;
+    setLoadingCampaign((prev) => prev || true);
     try {
       const c = await getCampaign(address);
       setCampaign(c);
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoadingCampaign(false);
+    }
+  }, []);
+
+  // --- Olay akışı (event streaming): kontratın yayınladığı deposit/claim/refund
+  // event'lerini Soroban RPC getEvents ile dinler, gerçek zamanlı bir aktivite
+  // listesi oluşturur (state polling'e ek, ondan bağımsız bir kanal).
+  const pollEvents = useCallback(async () => {
+    if (!CONTRACT_ID) return;
+    try {
+      if (nextLedgerRef.current === null) {
+        const latest = await getLatestLedger();
+        nextLedgerRef.current = Math.max(1, latest - EVENT_LOOKBACK_LEDGERS);
+      }
+      const { events: fresh, latestLedger } = await getRecentEvents(nextLedgerRef.current);
+      if (fresh.length > 0) {
+        setEvents((prev) => {
+          const seen = new Set(prev.map((e) => e.id));
+          const merged = [...fresh.filter((e) => !seen.has(e.id)).reverse(), ...prev];
+          return merged.slice(0, MAX_ACTIVITY_ITEMS);
+        });
+      }
+      nextLedgerRef.current = latestLedger + 1;
+    } catch (e) {
+      console.error('event polling', e);
     }
   }, []);
 
   useEffect(() => {
     if (!pubKey) return;
     refresh(pubKey);
-    const id = setInterval(() => refresh(pubKey), 8000); // her 8 sn canlı güncelle
-    return () => clearInterval(id);
-  }, [pubKey, refresh]);
+    pollEvents();
+    const stateId = setInterval(() => refresh(pubKey), 8000); // her 8 sn canlı durum güncelle
+    const eventId = setInterval(pollEvents, 6000); // her 6 sn yeni event kontrolü
+    return () => {
+      clearInterval(stateId);
+      clearInterval(eventId);
+    };
+  }, [pubKey, refresh, pollEvents]);
 
   // Geri sayım için saniye sayacı.
   useEffect(() => {
@@ -204,6 +250,7 @@ function App() {
 
   return (
     <div
+      className="app-shell"
       style={{
         minHeight: '100vh',
         backgroundColor: '#0f172a',
@@ -213,9 +260,11 @@ function App() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        boxSizing: 'border-box',
       }}
     >
       <div
+        className="app-card"
         style={{
           maxWidth: '540px',
           width: '100%',
@@ -224,9 +273,10 @@ function App() {
           padding: '30px',
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
           border: '1px solid #334155',
+          boxSizing: 'border-box',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '26px', fontWeight: 800, margin: 0, color: '#38bdf8', letterSpacing: '-1px' }}>
             Sentinel <span style={{ fontSize: '14px', color: '#94a3b8' }}>Crowdfunding</span>
           </h1>
@@ -285,7 +335,10 @@ function App() {
         ) : (
           <>
             {/* Bağlantı */}
-            <div style={{ ...card, marginBottom: '18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              className="conn-row"
+              style={{ ...card, marginBottom: '18px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}
+            >
               <div>
                 <div style={{ color: '#10b981', fontSize: '11px', fontWeight: 'bold' }}>● BAĞLANDI</div>
                 <div style={{ fontSize: '12px', color: '#64748b', fontFamily: 'monospace', marginTop: '4px' }}>
@@ -303,30 +356,60 @@ function App() {
 
             {/* İlerleme */}
             <div style={{ ...card, marginBottom: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
-                <span style={{ fontSize: '24px', fontWeight: 800 }}>
-                  {fromStroops(total).toFixed(2)}{' '}
-                  <span style={{ fontSize: '14px', color: '#94a3b8' }}>
-                    / {fromStroops(target).toFixed(2)} XLM
-                  </span>
-                </span>
-                <span style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 700 }}>%{progress.toFixed(0)}</span>
-              </div>
-              <div style={{ height: '10px', background: '#0b1220', borderRadius: '6px', overflow: 'hidden', border: '1px solid #334155' }}>
-                <div
-                  style={{
-                    width: `${progress}%`,
-                    height: '100%',
-                    background: state === 'failed' ? '#ef4444' : state === 'success' ? '#10b981' : '#38bdf8',
-                    transition: 'width 0.5s',
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '12px', color: '#94a3b8' }}>
-                <span>⏳ {initialized ? (running ? fmtCountdown(deadline - now) : 'Süre doldu') : '—'}</span>
-                <span>Senin katkın: <strong style={{ color: '#f8fafc' }}>{fromStroops(myContribution).toFixed(2)} XLM</strong></span>
-              </div>
+              {loadingCampaign && !campaign ? (
+                <div style={{ fontSize: '13px', color: '#94a3b8', padding: '6px 0' }}>
+                  ⏳ Kampanya verisi yükleniyor…
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '24px', fontWeight: 800 }}>
+                      {fromStroops(total).toFixed(2)}{' '}
+                      <span style={{ fontSize: '14px', color: '#94a3b8' }}>
+                        / {fromStroops(target).toFixed(2)} XLM
+                      </span>
+                    </span>
+                    <span style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 700 }}>%{progress.toFixed(0)}</span>
+                  </div>
+                  <div style={{ height: '10px', background: '#0b1220', borderRadius: '6px', overflow: 'hidden', border: '1px solid #334155' }}>
+                    <div
+                      style={{
+                        width: `${progress}%`,
+                        height: '100%',
+                        background: state === 'failed' ? '#ef4444' : state === 'success' ? '#10b981' : '#38bdf8',
+                        transition: 'width 0.5s',
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'space-between', marginTop: '12px', fontSize: '12px', color: '#94a3b8' }}>
+                    <span>⏳ {initialized ? (running ? fmtCountdown(deadline - now) : 'Süre doldu') : '—'}</span>
+                    <span>Senin katkın: <strong style={{ color: '#f8fafc' }}>{fromStroops(myContribution).toFixed(2)} XLM</strong></span>
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* Aktivite akışı (gerçek zamanlı event streaming) */}
+            {events.length > 0 && (
+              <div style={{ ...card, marginBottom: '18px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '10px', letterSpacing: '0.5px' }}>
+                  🔴 CANLI AKTİVİTE
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                  {events.map((e) => (
+                    <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
+                      <span style={{ color: '#cbd5e1' }}>
+                        {{ deposit: '💰', claim: '✅', refund: '↩️' }[e.type]}{' '}
+                        {{ deposit: 'Bağış', claim: 'Çekim', refund: 'İade' }[e.type]}
+                        {' · '}
+                        <span style={{ fontFamily: 'monospace', color: '#64748b' }}>{short(e.actor)}</span>
+                      </span>
+                      <strong style={{ color: '#f8fafc' }}>{fromStroops(e.amount).toFixed(2)} XLM</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Aksiyonlar */}
             {state === 'running' && (
