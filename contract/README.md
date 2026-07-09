@@ -1,80 +1,81 @@
 # Sentinel Contracts (Soroban / Rust) — Crowdfunding + Registry
 
-Cargo workspace ile iki sözleşme:
+A Cargo workspace with two contracts:
 
-- **`.` (sentinel-contract)** — kitle fonlama kampanyası. Bağışlar gerçek token (native XLM) olarak sözleşmede toplanır; süre sonunda hedefe ulaşıldıysa fon sahibe aktarılır, ulaşılamadıysa bağışçılar iadesini alır. `claim`/`refund` sonrası sonucu Registry'ye **inter-contract call** ile bildirir.
-- **`registry/` (sentinel-registry)** — bağımsız, ayrı deploy edilen sözleşme. Herhangi bir kampanyanın nihai sonucunu idempotent şekilde kaydeder.
+- **`.` (sentinel-contract)** — the crowdfunding campaign. Donations are collected in real token (native XLM) by the contract; once the deadline passes, funds go to the owner if the goal was reached, or donors get refunded if it wasn't. After `claim`/`refund` it reports the outcome to the Registry via an **inter-contract call**.
+- **`registry/` (sentinel-registry)** — an independent, separately deployed contract. Records the final outcome of any campaign, idempotently.
 
-## Fonksiyonlar — Kampanya (`sentinel-contract`)
+## Functions — Campaign (`sentinel-contract`)
 
-| Fonksiyon | Açıklama |
+| Function | Description |
 |-----------|----------|
-| `initialize(recipient, token, registry, target, deadline)` | Kampanyayı bir kez kurar (hedef stroop, deadline unix saniye, registry sözleşme adresi). |
-| `deposit(donor, amount)` | Bağışçıdan sözleşmeye `amount` token aktarır (imza gerekir). Zincire `deposit` event'i yayınlar. |
-| `claim()` | Deadline sonrası hedefe ulaşıldıysa tüm fonu sahibe aktarır, `claim` event'i yayınlar, Registry'yi bilgilendirir. |
-| `refund(donor)` | Deadline sonrası hedefe ulaşılamadıysa bağışçıya iade eder, `refund` event'i yayınlar, Registry'yi bilgilendirir. |
+| `initialize(recipient, token, registry, target, deadline)` | Sets up the campaign once (goal in stroops, deadline as a unix timestamp, registry contract address). |
+| `deposit(donor, amount)` | Transfers `amount` of the token from the donor to the contract (requires signature). Publishes a `deposit` event on-chain. |
+| `claim()` | After the deadline, if the goal was reached, transfers all funds to the owner, publishes a `claim` event, and notifies the Registry. |
+| `refund(donor)` | After the deadline, if the goal wasn't reached, refunds the donor, publishes a `refund` event, and notifies the Registry. |
 | `get_state()` | 0=Running, 1=Success, 2=Failed. |
-| `get_total() / get_target() / get_deadline() / get_recipient() / get_registry() / get_contribution(addr) / is_claimed()` | Görünümler. |
+| `get_total() / get_target() / get_deadline() / get_recipient() / get_registry() / get_contribution(addr) / is_claimed()` | Read-only views. |
 
-> Birim: `1 XLM = 10_000_000 stroop`.
+> Unit: `1 XLM = 10_000_000 stroops`.
 
-## Fonksiyonlar — Registry (`sentinel-registry`)
+## Functions — Registry (`sentinel-registry`)
 
-| Fonksiyon | Açıklama |
+| Function | Description |
 |-----------|----------|
-| `record(campaign, recipient, total, target, success)` | Bir kampanyanın nihai sonucunu kaydeder. `campaign.require_auth()` ile yalnızca o kampanya sözleşmesi kendi adına yazabilir (contract-to-contract auth). İdempotent: ikinci çağrı yok sayılır. |
-| `get_result(campaign)` | Kayıtlı sonucu döner (`Option<CampaignResult>`). |
-| `count()` | Toplam kayıt sayısı. |
+| `record(campaign, recipient, total, target, success)` | Records a campaign's final outcome. `campaign.require_auth()` ensures only that campaign contract can write on its own behalf (contract-to-contract auth). Idempotent: a second call is ignored. |
+| `get_result(campaign)` | Returns the recorded result (`Option<CampaignResult>`). |
+| `count()` | Total number of records. |
 
-## Gereksinimler
+## Requirements
 
 ```bash
 rustup target add wasm32-unknown-unknown
 cargo install --locked stellar-cli
 ```
 
-## Derleme & Test
+## Build & Test
 
 ```bash
 cargo test --workspace
 cargo build --workspace --target wasm32-unknown-unknown --release
-# Çıktı: target/wasm32-unknown-unknown/release/sentinel_contract.wasm
-#        target/wasm32-unknown-unknown/release/sentinel_registry.wasm
+# Output: target/wasm32-unknown-unknown/release/sentinel_contract.wasm
+#         target/wasm32-unknown-unknown/release/sentinel_registry.wasm
 ```
 
-> `registry/Cargo.toml` bilinçli olarak yalnızca `crate-type = ["cdylib"]` kullanır — `"rlib"` eklemek
-> (örn. campaign testlerinden Rust seviyesinde import etmek için) wasm32 çıktısında Soroban host'unun
-> reddettiği bir `reference-types` özelliği doğurdu. Bu yüzden campaign'in `test.rs`'i registry'yi Rust
-> tipiyle değil, aynı ABI'ye sahip yerel bir `MockRegistry` ile test eder.
+> `registry/Cargo.toml` deliberately uses only `crate-type = ["cdylib"]` — adding `"rlib"`
+> (e.g. to import it at the Rust level from the campaign's tests) produced a `reference-types`
+> wasm feature that the Soroban host rejects. Because of that, the campaign's `test.rs` tests
+> the inter-contract call against a local `MockRegistry` sharing the same ABI, instead of
+> importing the registry crate's Rust type.
 
 ## Deploy (Testnet)
 
 ```bash
-# 1) Kimlik oluştur ve fonla
+# 1) Create and fund an identity
 stellar keys generate alice --network testnet --fund
 export OWNER=$(stellar keys address alice)
 
-# 2) Registry'yi deploy et
+# 2) Deploy the registry
 stellar contract deploy \
   --wasm target/wasm32-unknown-unknown/release/sentinel_registry.wasm \
   --source alice --network testnet
-export REGISTRY=<yukarıdan_gelen_C...>
+export REGISTRY=<resulting_C...>
 
-# 3) Kampanya sözleşmesini deploy et
+# 3) Deploy the campaign contract
 stellar contract deploy \
   --wasm target/wasm32-unknown-unknown/release/sentinel_contract.wasm \
   --source alice --network testnet
-export CID=<yukarıdan_gelen_C...>
+export CID=<resulting_C...>
 
-# 4) Native XLM token (SAC) adresini al
+# 4) Get the native XLM token (SAC) address
 stellar contract id asset --asset native --network testnet
 export TOKEN=<C...native_sac>
 
-# 5) Kampanyayı başlat (örnek: hedef 50 XLM = 500000000 stroop, deadline unix saniye)
+# 5) Initialize the campaign (example: 50 XLM goal = 500000000 stroops, deadline as a unix timestamp)
 stellar contract invoke --id $CID --source alice --network testnet -- \
   initialize --recipient $OWNER --token $TOKEN --registry $REGISTRY --target 500000000 --deadline 1767225600
 ```
 
-`CID`'yi `frontend/.env` içine `VITE_CONTRACT_ID` olarak yaz.
+Write `CID` into `frontend/.env` as `VITE_CONTRACT_ID`.
 
-> Eski `soroban` CLI kullanıyorsan `stellar` yerine `soroban` yazabilirsin.
+> If you're using the older `soroban` CLI, use `soroban` instead of `stellar`.

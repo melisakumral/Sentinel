@@ -1,161 +1,161 @@
-# 🪐 Sentinel — Merkeziyetsiz Kitle Fonlama (Crowdfunding)
+# 🪐 Sentinel — Decentralized Crowdfunding
 
 ![CI](https://github.com/melisakumral/Sentinel/actions/workflows/ci.yml/badge.svg)
 
-Sentinel, Stellar/Soroban üzerinde çalışan bir **kitle fonlama** dApp'idir. Proje sahibi bir hedef tutar ve süre belirler; bağışçılar cüzdanlarını bağlayıp doğrudan sözleşmeye XLM gönderir. Süre dolduğunda:
+Sentinel is a **crowdfunding** dApp running on Stellar/Soroban. A project owner sets a funding goal and a deadline; donors connect their wallet and send XLM directly to the contract. Once the deadline passes:
 
-- **Hedefe ulaşıldıysa** → fonlar proje sahibine aktarılır (`claim`).
-- **Ulaşılamadıysa** → bağışlar otomatik olarak bağışçılara iade edilir (`refund`).
+- **If the goal was reached** → funds are transferred to the project owner (`claim`).
+- **If it wasn't** → donations are automatically refunded to each donor (`refund`).
 
-Her iki durumda da kampanya sözleşmesi, nihai sonucu ayrı bir **Sentinel Registry** sözleşmesine gerçek bir inter-contract call ile bildirir. Aracı yok, her hareket zincirde şeffaf, süreç akıllı sözleşmeyle otomatik.
+In both cases, the campaign contract reports the final outcome to a separate **Sentinel Registry** contract via a real inter-contract call. No middleman, every action is transparent on-chain, and the whole process is automated by smart contracts.
 
-## 🏗️ Mimari
+## 🏗️ Architecture
 
 ```
                  deposit / claim / refund
-   Bağışçı ───────────────────────────────▶  Sentinel Campaign (contract/)
+   Donor ──────────────────────────────────▶  Sentinel Campaign (contract/)
                                                   │  │
                                           token   │  │  invoke_contract("record", …)
-                                        transfer   │  │  (claim/refund sonrası)
+                                        transfer   │  │  (after claim/refund)
                                                   ▼  ▼
                                      Native XLM SAC   Sentinel Registry (contract/registry/)
                                                           │
                                                           ▼
-                                                idempotent kayıt: campaign → {recipient, total, target, success}
+                                            idempotent record: campaign → {recipient, total, target, success}
 ```
 
-- **`contract/`** — kampanya sözleşmesi (`SentinelContract`). `deposit`/`claim`/`refund` sırasında zincir üstü **event** yayınlar (`env.events().publish`) ve `claim`/`refund` sonrası **inter-contract call** ile Registry'yi bilgilendirir (`env.invoke_contract`, derleme zamanı bağımlılığı yok — sadece ABI'ye bağımlı).
-- **`contract/registry/`** — bağımsız, ayrı deploy edilen **Sentinel Registry** sözleşmesi (`SentinelRegistry`). `record(...)` **idempotent**'tir: bir kampanya için ilk kayıt kalıcıdır, sonraki çağrılar (örn. her donor'un ayrı `refund` çağrısı) yok sayılır.
-- **`frontend/`** — React + TypeScript. Kontrat durumu 8 sn'de bir poll edilir; ayrıca `getEvents` RPC'si ile kontrat event'leri 6 sn'de bir dinlenerek gerçek zamanlı bir **Aktivite Akışı** gösterilir.
-- **`.github/workflows/ci.yml`** — her push/PR'da kontrat (`cargo test --workspace`, wasm build) ve frontend (`lint`, `vitest`, `tsc`+`vite build`) doğrulanır.
+- **`contract/`** — the campaign contract (`SentinelContract`). Publishes on-chain **events** during `deposit`/`claim`/`refund` (`env.events().publish`) and reports the outcome to the Registry via a real **inter-contract call** after `claim`/`refund` (`env.invoke_contract` — no compile-time dependency, only coupled through the ABI).
+- **`contract/registry/`** — an independent, separately deployed **Sentinel Registry** contract (`SentinelRegistry`). `record(...)` is **idempotent**: the first record for a campaign is permanent, later calls (e.g. each donor's separate `refund`) are ignored.
+- **`frontend/`** — React + TypeScript. Contract state is polled every 8s; contract events are also streamed via the `getEvents` RPC every 6s to power a real-time **Activity Feed**.
+- **`.github/workflows/ci.yml`** — every push/PR runs the contract suite (`cargo test --workspace`, wasm build) and the frontend suite (`lint`, `vitest`, `tsc`+`vite build`).
 
-## 🏆 Level 2 Gereksinimleri — Karşılanma
+## 🏆 Level 2 Requirements — Coverage
 
-| Gereksinim | Durum |
+| Requirement | Status |
 |-----------|-------|
-| StellarWalletsKit ile çoklu cüzdan | ✅ `frontend/src/lib/wallet.ts` |
-| 3 hata tipi (wallet not found, rejected, insufficient balance) | ✅ `classifyError()` (`frontend/src/lib/errors.ts`) |
-| Testnet'e deploy edilmiş sözleşme | ✅ Aşağıda Contract ID |
-| Frontend'den sözleşme çağırma (deposit/claim/refund) | ✅ `frontend/src/lib/contract.ts` |
-| İşlem durumu görünür (pending/success/fail) | ✅ App.tsx durum kutusu |
-| Gerçek zamanlı takip (event/state senkronu) | ✅ 8 sn state polling + ilerleme çubuğu |
-| 2+ anlamlı commit | ✅ Git geçmişine bak |
+| Multi-wallet via StellarWalletsKit | ✅ `frontend/src/lib/wallet.ts` |
+| 3 error types (wallet not found, rejected, insufficient balance) | ✅ `classifyError()` (`frontend/src/lib/errors.ts`) |
+| Contract deployed on testnet | ✅ Contract ID below |
+| Calling the contract from the frontend (deposit/claim/refund) | ✅ `frontend/src/lib/contract.ts` |
+| Transaction status visible (pending/success/fail) | ✅ App.tsx status box |
+| Real-time tracking (event/state sync) | ✅ 8s state polling + progress bar |
+| 2+ meaningful commits | ✅ See git history |
 
-## 🥇 Level 3 Gereksinimleri — Karşılanma
+## 🥇 Level 3 Requirements — Coverage
 
-| Gereksinim | Durum |
+| Requirement | Status |
 |-----------|-------|
-| Gelişmiş akıllı kontrat mantığı | ✅ Kampanya + Registry, idempotent kayıt, event yayını |
-| Inter-contract communication | ✅ `env.invoke_contract` ile canlı testnet çağrısı (bkz. aşağıdaki `claim` tx) |
-| Event streaming & gerçek zamanlı güncellemeler | ✅ `getEvents` polling → Aktivite Akışı (`frontend/src/lib/contract.ts` → `getRecentEvents`) |
-| CI/CD pipeline | ✅ `.github/workflows/ci.yml` (contract + frontend job'ları) |
-| Kontrat deploy iş akışı | ✅ Aşağıda `stellar contract deploy`/`invoke` adımları, gerçek deploy |
-| Mobil uyumlu frontend | ✅ `app-shell`/`app-card` + `@media (max-width: 480px)` (`frontend/src/App.css`) |
-| Hata yönetimi & loading state | ✅ `classifyError`, `loadingCampaign` state, işlem durum kutusu |
-| Kontrat + frontend testleri | ✅ 8 Rust testi (`cargo test --workspace`) + 7 Vitest testi (`npm run test`) = **15 test** |
-| Production-ready mimari | ✅ Cargo workspace, saf/test edilebilir modüller (`stroops.ts`, `errors.ts`), CI |
-| Dokümantasyon & demo sunumu | ✅ Bu README + aşağıdaki teslim bilgileri |
+| Advanced smart contract logic | ✅ Campaign + Registry, idempotent recording, event publishing |
+| Inter-contract communication | ✅ `env.invoke_contract`, verified live on testnet (see `claim` tx below) |
+| Event streaming & real-time updates | ✅ `getEvents` polling → Activity Feed (`frontend/src/lib/contract.ts` → `getRecentEvents`) |
+| CI/CD pipeline | ✅ `.github/workflows/ci.yml` (contract + frontend jobs) |
+| Smart contract deployment workflow | ✅ `stellar contract deploy`/`invoke` steps below, real deployment |
+| Mobile-responsive frontend | ✅ `app-shell`/`app-card` + `@media (max-width: 480px)` (`frontend/src/App.css`) |
+| Error handling & loading states | ✅ `classifyError`, `loadingCampaign` state, transaction status box |
+| Contract + frontend tests | ✅ 8 Rust tests (`cargo test --workspace`) + 7 Vitest tests (`npm run test`) = **15 tests** |
+| Production-ready architecture | ✅ Cargo workspace, pure/testable modules (`stroops.ts`, `errors.ts`), CI |
+| Documentation & demo presentation | ✅ This README + the delivery info below |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
-| 10+ anlamlı commit | ✅ Git geçmişine bak |
-| Canlı demo linki (Vercel vb.) | ⬜ Manuel — bkz. "Kalan Manuel Adımlar" |
-| Ekran görüntüleri (mobil, CI, test çıktısı) | ⬜ Manuel — bkz. "Kalan Manuel Adımlar" |
-| Demo videosu (1-2 dk) | ⬜ Manuel — bkz. "Kalan Manuel Adımlar" |
+| 10+ meaningful commits | ✅ See git history |
+| Live demo link (Vercel etc.) | ⬜ Manual — see "Remaining Manual Steps" |
+| Screenshots (mobile, CI, test output) | ⬜ Manual — see "Remaining Manual Steps" |
+| Demo video (1-2 min) | ⬜ Manual — see "Remaining Manual Steps" |
 
-## 🔗 Teslim Bilgileri
+## 🔗 Delivery Info
 
-### Ana kampanya (frontend'in kullandığı, uzun ömürlü)
+### Main campaign (the one the frontend uses, long-lived)
 
-| Alan | Değer |
+| Field | Value |
 |------|-------|
 | **Campaign Contract ID** | [`CAGE4RJ5C4MAAWVT5I5F7XOUE25GVMWUTPXRQRIMPCEIJUD6E3DT5LR3`](https://stellar.expert/explorer/testnet/contract/CAGE4RJ5C4MAAWVT5I5F7XOUE25GVMWUTPXRQRIMPCEIJUD6E3DT5LR3) |
 | **Registry Contract ID** | [`CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EMZDJW6`](https://stellar.expert/explorer/testnet/contract/CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EMZDJW6) |
-| **Deploy işlemi (tx hash)** | [`5fa0c816...`](https://stellar.expert/explorer/testnet/tx/5fa0c816e13b6c7c5a0402ff907c9bd5ee38cef68f8d221b2211029772e2eefb) |
+| **Deploy transaction (tx hash)** | [`5fa0c816...`](https://stellar.expert/explorer/testnet/tx/5fa0c816e13b6c7c5a0402ff907c9bd5ee38cef68f8d221b2211029772e2eefb) |
 | **`initialize` (tx hash)** | [`ec8c51c4...`](https://stellar.expert/explorer/testnet/tx/ec8c51c4c65987ea7fdef65d6a9f190a551ff3160e385b80f404c9ff97910be4) |
-| **Örnek kontrat çağrısı — `deposit` (tx hash)** | [`999380b4...`](https://stellar.expert/explorer/testnet/tx/999380b4da5ac05ab367cc8fbf50f9371d223a6120d005815803c8516723d634) |
-| **Kampanya hedefi / süre** | 50 XLM · 7 gün |
+| **Sample contract call — `deposit` (tx hash)** | [`999380b4...`](https://stellar.expert/explorer/testnet/tx/999380b4da5ac05ab367cc8fbf50f9371d223a6120d005815803c8516723d634) |
+| **Campaign goal / duration** | 50 XLM · 7 days |
 
-### İnter-contract call kanıtı (kısa süreli test kampanyası)
+### Proof of inter-contract call (short-lived test campaign)
 
-Registry ile gerçek, canlı bir inter-contract call'ı testnet'te kanıtlamak için hedefi 1 XLM, süresi 70 sn olan ayrı bir kampanya deploy edildi, dolduruldu ve `claim` çağrıldı:
+To prove a real, live inter-contract call to the Registry on testnet, a separate campaign was deployed with a 1 XLM goal and a 70-second deadline, funded, and then `claim`ed:
 
-| Alan | Değer |
+| Field | Value |
 |------|-------|
 | **Demo Campaign Contract ID** | [`CBYJEVF3ZBKAPLUTRHSGS6VGJNM7ZKO4YNTQVOA4E5A67EL462JTO3GL`](https://stellar.expert/explorer/testnet/contract/CBYJEVF3ZBKAPLUTRHSGS6VGJNM7ZKO4YNTQVOA4E5A67EL462JTO3GL) |
-| **`claim` (tx hash) — inter-contract call tetikleyici** | [`97531e7a...`](https://stellar.expert/explorer/testnet/tx/97531e7a436301b657aba85b4f73c8d52b90691a089c354e08fc574e77596607) |
+| **`claim` (tx hash) — inter-contract call trigger** | [`97531e7a...`](https://stellar.expert/explorer/testnet/tx/97531e7a436301b657aba85b4f73c8d52b90691a089c354e08fc574e77596607) |
 
-Bu tek işlem aynı anda 3 event üretti: token transferi, kampanyanın kendi `claim` event'i **ve** Registry'nin `logged` event'i (`CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EMZDJW6` üzerinde) — yani kampanya sözleşmesi Registry sözleşmesini gerçekten zincir üstünde çağırdı. Doğrulama:
+This single transaction produced 3 events at once: the token transfer, the campaign's own `claim` event, **and** the Registry's `logged` event (on `CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EMZDJW6`) — meaning the campaign contract genuinely called the Registry contract on-chain. Verification:
 
 ```bash
 stellar contract invoke --id CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EMZDJW6 \
-  --source <herhangi-bir-hesap> --network testnet -- \
+  --source <any-account> --network testnet -- \
   get_result --campaign CBYJEVF3ZBKAPLUTRHSGS6VGJNM7ZKO4YNTQVOA4E5A67EL462JTO3GL
 # → {"recipient":"G...","reported_at":1783605572,"success":true,"target":"10000000","total":"10000000"}
 ```
 
-### Ekran görüntüleri / demo
+### Screenshots / demo
 
-| Alan | Değer |
+| Field | Value |
 |------|-------|
-| **Canlı Demo (Vercel)** | `https://... (bkz. Kalan Manuel Adımlar)` |
-| **Ekran görüntüsü: cüzdan seçenekleri** | `docs/wallet-options.png (ekle)` |
-| **Ekran görüntüsü: bağlı cüzdan + bakiye/ilerleme** | `docs/connected-progress.png (ekle)` |
-| **Ekran görüntüsü: başarılı işlem** | `docs/tx-success.png (ekle)` |
-| **Ekran görüntüsü: mobil responsive UI** | `docs/mobile.png (ekle)` |
-| **Ekran görüntüsü: CI pipeline çalışırken** | `docs/ci-run.png (ekle)` |
-| **Ekran görüntüsü: test çıktısı (3+ geçen test)** | `docs/test-output.png (ekle)` |
-| **Demo videosu (1-2 dk)** | `(ekle)` |
+| **Live Demo (Vercel)** | `https://... (see Remaining Manual Steps)` |
+| **Screenshot: wallet options** | `docs/wallet-options.png (add)` |
+| **Screenshot: connected wallet + balance/progress** | `docs/connected-progress.png (add)` |
+| **Screenshot: successful transaction** | `docs/tx-success.png (add)` |
+| **Screenshot: mobile responsive UI** | `docs/mobile.png (add)` |
+| **Screenshot: CI pipeline running** | `docs/ci-run.png (add)` |
+| **Screenshot: test output (3+ passing tests)** | `docs/test-output.png (add)` |
+| **Demo video (1-2 min)** | `(add)` |
 
-## ⬜ Kalan Manuel Adımlar
+## ⬜ Remaining Manual Steps
 
-Aşağıdakiler tarayıcı, hesap girişi veya ekran kaydı gerektirdiği için otomatik tamamlanamadı:
+The following couldn't be automated because they require a browser, an account login, or screen recording:
 
-1. **Vercel'e deploy** — `frontend/` dizininde `vercel` (veya Vercel dashboard'dan import) ile deploy et, `VITE_CONTRACT_ID` env değişkenini ekle (Root Directory = `frontend`), linki yukarıdaki tabloya ekle.
-2. **Ekran görüntüleri** — `npm run dev` ile uygulamayı çalıştır, Freighter ile bağlan, sırasıyla: cüzdan seçenekleri modalı, bağlı+bakiye/ilerleme ekranı, başarılı işlem kutusu, tarayıcıyı daraltıp mobil görünüm, `docs/` klasörüne kaydet.
-3. **CI ekran görüntüsü** — bu commit push'landıktan sonra GitHub → Actions sekmesinde çalışan pipeline'ın ekran görüntüsünü al.
-4. **Test çıktısı ekran görüntüsü** — `cargo test --workspace` ve/veya `npm run test -- --run` çıktısının ekran görüntüsü.
-5. **Demo videosu** — uygulamanın 1-2 dakikalık kısa bir kullanım videosu (cüzdan bağlama → bağış → sonuç).
+1. **Deploy to Vercel** — deploy `frontend/` with `vercel` (or import via the Vercel dashboard), add the `VITE_CONTRACT_ID` env var (Root Directory = `frontend`), add the link to the table above.
+2. **Screenshots** — run the app with `npm run dev`, connect with Freighter, capture in order: the wallet-options modal, the connected+balance/progress screen, the successful-transaction box, then narrow the browser for the mobile view, and save to `docs/`.
+3. **CI screenshot** — after this commit is pushed, screenshot the running pipeline on GitHub's Actions tab.
+4. **Test output screenshot** — screenshot the output of `cargo test --workspace` and/or `npm run test -- --run`.
+5. **Demo video** — a short 1-2 minute walkthrough of the app (connect wallet → donate → result).
 
-## 🗂️ Proje Yapısı
+## 🗂️ Project Structure
 
 ```
 Sentinel/
-├─ .github/workflows/ci.yml   # CI: contract testleri/build + frontend lint/test/build
+├─ .github/workflows/ci.yml   # CI: contract tests/build + frontend lint/test/build
 ├─ contract/                  # Cargo workspace
 │  ├─ src/
-│  │  ├─ lib.rs               # SentinelContract: initialize/deposit/claim/refund + event + invoke_contract
-│  │  └─ test.rs              # 5 test (mock registry ile inter-contract call doğrulaması dahil)
-│  └─ registry/                # SentinelRegistry: bağımsız, ayrı deploy edilen sözleşme
+│  │  ├─ lib.rs               # SentinelContract: initialize/deposit/claim/refund + events + invoke_contract
+│  │  └─ test.rs              # 5 tests (including inter-contract call verification via a mock registry)
+│  └─ registry/                # SentinelRegistry: independent, separately deployed contract
 │     └─ src/
-│        ├─ lib.rs             # record/get_result/count, idempotent kayıt
-│        └─ test.rs            # 3 test
+│        ├─ lib.rs             # record/get_result/count, idempotent recording
+│        └─ test.rs            # 3 tests
 └─ frontend/                  # React + TypeScript + Vite
    └─ src/
-      ├─ App.tsx               # ilerleme çubuğu, aktivite akışı, işlem durumu, mobil responsive
-      ├─ App.css                # @media (max-width: 480px) responsive kuralları
+      ├─ App.tsx               # progress bar, activity feed, transaction status, mobile responsive
+      ├─ App.css                # @media (max-width: 480px) responsive rules
       └─ lib/
-         ├─ wallet.ts           # StellarWalletsKit kurulumu
-         ├─ errors.ts           # classifyError — saf, test edilebilir (errors.test.ts)
-         ├─ stroops.ts          # stroop <-> XLM dönüşümü — saf, test edilebilir (stroops.test.ts)
+         ├─ wallet.ts           # StellarWalletsKit setup
+         ├─ errors.ts           # classifyError — pure, testable (errors.test.ts)
+         ├─ stroops.ts          # stroop <-> XLM conversion — pure, testable (stroops.test.ts)
          └─ contract.ts         # deposit/claim/refund/getCampaign + getRecentEvents (event streaming)
 ```
 
-## 🛠️ Teknolojiler
+## 🛠️ Tech Stack
 
-Rust + `soroban-sdk` v22 (Cargo workspace: kampanya + registry) · React 19 + TypeScript + Vite · Vitest · `@creit.tech/stellar-wallets-kit` · `stellar-sdk` (Soroban RPC, `getEvents`) · GitHub Actions · Stellar Testnet.
+Rust + `soroban-sdk` v22 (Cargo workspace: campaign + registry) · React 19 + TypeScript + Vite · Vitest · `@creit.tech/stellar-wallets-kit` · `stellar-sdk` (Soroban RPC, `getEvents`) · GitHub Actions · Stellar Testnet.
 
-## 🧪 Testler
+## 🧪 Tests
 
 ```bash
-# Kontratlar (workspace: campaign + registry) — 8 test
+# Contracts (workspace: campaign + registry) — 8 tests
 cd contract && cargo test --workspace
 
-# Frontend — 7 test (stroop dönüşümü + hata sınıflandırma)
+# Frontend — 7 tests (stroop conversion + error classification)
 cd frontend && npm run test -- --run
 ```
 
-## 🚀 Baştan Sona Kurulum
+## 🚀 Full Setup
 
-### 1) Sözleşmeler — derle, test, deploy, başlat
+### 1) Contracts — build, test, deploy, initialize
 
 ```bash
 cd contract
@@ -166,48 +166,48 @@ cargo build --workspace --target wasm32-unknown-unknown --release
 stellar keys generate alice --network testnet --fund
 export OWNER=$(stellar keys address alice)
 
-# 1. Registry'yi deploy et
+# 1. Deploy the registry
 stellar contract deploy \
   --wasm target/wasm32-unknown-unknown/release/sentinel_registry.wasm \
   --source alice --network testnet
-export REGISTRY=<gelen_Registry_Contract_ID>
+export REGISTRY=<resulting_Registry_Contract_ID>
 
-# 2. Kampanyayı deploy et
+# 2. Deploy the campaign
 stellar contract deploy \
   --wasm target/wasm32-unknown-unknown/release/sentinel_contract.wasm \
   --source alice --network testnet
-export CID=<gelen_Campaign_Contract_ID>
+export CID=<resulting_Campaign_Contract_ID>
 
 stellar contract id asset --asset native --network testnet
-export TOKEN=<gelen_native_SAC>
+export TOKEN=<resulting_native_SAC>
 
-# 3. Kampanyayı başlat (registry adresini de geçir)
-# Örnek: hedef 50 XLM, deadline = ileri bir unix saniye
+# 3. Initialize the campaign (pass the registry address too)
+# Example: 50 XLM goal, deadline = a future unix timestamp
 stellar contract invoke --id $CID --source alice --network testnet -- \
   initialize --recipient $OWNER --token $TOKEN --registry $REGISTRY --target 500000000 --deadline 1767225600
 ```
 
-### 2) Frontend — çalıştır
+### 2) Frontend — run it
 
 ```bash
 cd ../frontend
 npm install
 cp .env.example .env      # Windows: copy .env.example .env
-# .env içine:  VITE_CONTRACT_ID=<CID>
+# in .env:  VITE_CONTRACT_ID=<CID>
 npm run dev
 ```
 
-`http://localhost:5173` → Cüzdan Bağla → Bağış Yap. Süre dolunca sahip `claim`, başarısızsa bağışçı `refund` görür. Kontrat event'leri "Canlı Aktivite" kutusunda gerçek zamanlı listelenir.
+`http://localhost:5173` → Connect Wallet → Donate. Once the deadline passes, the owner sees `claim`; if the goal wasn't met, donors see `refund`. Contract events are listed in real time in the "Live Activity" box.
 
-### 3) Test cüzdanı fonlama
+### 3) Fund a test wallet
 
-Bağış yapabilmek için cüzdanında test XLM olmalı: https://friendbot.stellar.org adresine cüzdan adresini gir.
+To donate you need test XLM in your wallet: enter your wallet address at https://friendbot.stellar.org.
 
 ## 📦 Git
 
 ```bash
-git remote add origin https://github.com/<kullanıcı>/sentinel.git
+git remote add origin https://github.com/<user>/sentinel.git
 git push -u origin main
 ```
 
-> Not: Eski (Freighter-only) frontend sürümü `frontend/_backup/App.freighter.tsx` içinde referans olarak duruyor. Vercel'e deploy ederken **Root Directory = frontend** seç ve `VITE_CONTRACT_ID` ortam değişkenini ekle.
+> Note: the old (Freighter-only) frontend version is kept for reference in `frontend/_backup/App.freighter.tsx`. When deploying to Vercel, set **Root Directory = frontend** and add the `VITE_CONTRACT_ID` environment variable.
