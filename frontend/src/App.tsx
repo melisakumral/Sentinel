@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback, useRef, type CSSProperties } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
+import ConnectGate from './ConnectGate';
+import { SentinelLogo } from './Logo';
 import { kit, getAvailableWallets, classifyError } from './lib/wallet';
 import {
   CONTRACT_ID,
@@ -15,12 +17,28 @@ import {
   type Campaign,
   type ActivityEvent,
 } from './lib/contract';
+import {
+  IconActivity,
+  IconAlert,
+  IconCheckCircle,
+  IconClock,
+  IconDroplet,
+  IconLogout,
+  IconRadar,
+  IconWallet,
+} from './icons';
 
 type TxState = 'idle' | 'pending' | 'success' | 'fail';
 
 // A lookback window that stays comfortably inside testnet's event retention.
 const EVENT_LOOKBACK_LEDGERS = 400;
-const MAX_ACTIVITY_ITEMS = 8;
+const MAX_ACTIVITY_ITEMS = 14;
+
+const EVENT_META: Record<ActivityEvent['type'], { label: string; dot: string }> = {
+  deposit: { label: 'Donation', dot: 'var(--accent)' },
+  claim: { label: 'Claim', dot: 'var(--success)' },
+  refund: { label: 'Refund', dot: 'var(--text-muted)' },
+};
 
 function App() {
   const [pubKey, setPubKey] = useState<string | null>(null);
@@ -202,6 +220,16 @@ function App() {
 
   // --- Derived state ---
   const short = (k: string) => `${k.slice(0, 6)}...${k.slice(-6)}`;
+  const relativeTime = (iso: string, nowMs: number) => {
+    const t = Date.parse(iso);
+    if (!Number.isFinite(t)) return '';
+    const diff = Math.max(0, Math.round((nowMs - t) / 1000));
+    if (diff < 5) return 'just now';
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
   const deadline = campaign ? Number(campaign.deadline) : 0;
   const initialized = deadline > 0;
   const running = initialized && now < deadline;
@@ -215,10 +243,8 @@ function App() {
       : reached
         ? 'success'
         : 'failed';
-  const progress =
-    target > 0n ? Math.min(100, (Number(total) / Number(target)) * 100) : 0;
-  const isRecipient =
-    !!campaign?.recipient && !!pubKey && campaign.recipient === pubKey;
+  const progress = target > 0n ? Math.min(100, (Number(total) / Number(target)) * 100) : 0;
+  const isRecipient = !!campaign?.recipient && !!pubKey && campaign.recipient === pubKey;
   const myContribution = campaign ? campaign.contribution : 0n;
 
   const fmtCountdown = (secs: number) => {
@@ -233,376 +259,306 @@ function App() {
   };
 
   const stateBadge = {
-    none: { t: 'NOT STARTED', c: '#94a3b8' },
-    running: { t: 'ACTIVE', c: '#38bdf8' },
-    success: { t: 'SUCCESSFUL', c: '#10b981' },
-    failed: { t: 'FAILED', c: '#ef4444' },
+    none: { t: 'NOT STARTED', variant: 'neutral' },
+    running: { t: 'ACTIVE', variant: 'accent' },
+    success: { t: 'SUCCESSFUL', variant: 'success' },
+    failed: { t: 'FAILED', variant: 'danger' },
   }[state];
 
-  const msgColor =
-    tx === 'success' ? '#10b981' : tx === 'fail' ? '#f87171' : '#38bdf8';
-  const msgBg =
-    tx === 'success'
-      ? 'rgba(16,185,129,0.1)'
-      : tx === 'fail'
-        ? 'rgba(239,68,68,0.1)'
-        : 'rgba(56,189,248,0.1)';
-  const msgBorder =
-    tx === 'success' ? '#10b981' : tx === 'fail' ? '#ef4444' : '#38bdf8';
+  const progressColor = state === 'failed' ? 'var(--danger)' : state === 'success' ? 'var(--success)' : 'var(--accent)';
 
-  const card: CSSProperties = {
-    backgroundColor: '#0f172a',
-    border: '1px solid #334155',
-    borderRadius: '12px',
-    padding: '16px',
-  };
-  const input: CSSProperties = {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#0f172a',
-    border: '1px solid #334155',
-    borderRadius: '8px',
-    color: '#fff',
-    fontSize: '16px',
-    boxSizing: 'border-box',
-  };
+  const msgVariant = tx === 'success' ? 'success' : tx === 'fail' ? 'danger' : 'accent';
+  const MsgIcon = tx === 'pending' ? IconClock : tx === 'success' ? IconCheckCircle : IconAlert;
+
+  if (!pubKey) {
+    return (
+      <div className="sentinel-app">
+        <ConnectGate connecting={connecting} errorMessage={tx === 'fail' ? message : ''} onConnect={connectWallet} />
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="app-shell"
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#0f172a',
-        backgroundImage:
-          'radial-gradient(circle at 15% -10%, rgba(56,189,248,0.12), transparent 45%), radial-gradient(circle at 85% 0%, rgba(16,185,129,0.10), transparent 40%)',
-        color: '#f8fafc',
-        fontFamily: 'system-ui, sans-serif',
-        padding: '40px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        boxSizing: 'border-box',
-      }}
-    >
-      <div
-        className="app-card"
-        style={{
-          maxWidth: '540px',
-          width: '100%',
-          backgroundColor: '#1e293b',
-          borderRadius: '16px',
-          padding: '30px',
-          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-          border: '1px solid #334155',
-          boxSizing: 'border-box',
-        }}
-      >
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ fontSize: '26px', fontWeight: 800, margin: 0, color: '#38bdf8', letterSpacing: '-1px' }}>
-            🪐 Sentinel <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 500 }}>Crowdfunding</span>
-          </h1>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              color: stateBadge.c,
-              border: `1px solid ${stateBadge.c}`,
-              borderRadius: '20px',
-              padding: '4px 10px',
-            }}
-          >
+    <div className="sentinel-app">
+      <div className="sn-dash sn-fade-in">
+        <aside className="sn-side">
+          <div className="sn-brand" style={{ marginBottom: 18 }}>
+            <div className="sn-brand-mark">
+              <SentinelLogo size={16} />
+            </div>
+            <div>
+              <div className="sn-brand-name">Sentinel</div>
+              <div className="sn-brand-sub">Crowdfunding</div>
+            </div>
+          </div>
+
+          <span className={`sn-pill sn-pill--${stateBadge.variant}`} style={{ alignSelf: 'flex-start' }}>
             {stateBadge.t}
           </span>
-        </div>
-        <p style={{ color: '#94a3b8', fontSize: '13px', margin: '6px 0 22px' }}>
-          Decentralized crowdfunding · Stellar Testnet
-        </p>
 
-        {!CONTRACT_ID && (
-          <div
-            style={{
-              backgroundColor: 'rgba(245,158,11,0.1)',
-              border: '1px solid #f59e0b',
-              color: '#fbbf24',
-              padding: '12px',
-              borderRadius: '8px',
-              fontSize: '13px',
-              marginBottom: '20px',
-            }}
-          >
-            ⚠️ <strong>VITE_CONTRACT_ID</strong> is not set. After deploying, add the Contract ID to{' '}
-            <code>frontend/.env</code>.
+          <div className="sn-side-section">
+            <span className="sn-side-label">Account</span>
+            <span className="sn-side-value sn-mono">{short(pubKey)}</span>
+            {isRecipient && (
+              <span className="sn-pill sn-pill--accent" style={{ marginTop: 4, alignSelf: 'flex-start' }}>
+                Campaign owner
+              </span>
+            )}
           </div>
-        )}
 
-        {!pubKey ? (
-          <button
-            className="btn"
-            onClick={connectWallet}
-            disabled={connecting}
-            style={{
-              width: '100%',
-              padding: '16px',
-              backgroundColor: '#38bdf8',
-              color: '#0f172a',
-              fontSize: '16px',
-              fontWeight: 700,
-              border: 'none',
-              borderRadius: '12px',
-              cursor: 'pointer',
-            }}
-          >
-            {connecting ? 'Selecting wallet...' : '🔌 Connect Wallet'}
+          <div className="sn-side-section">
+            <span className="sn-side-label">Contract</span>
+            <span className="sn-side-value sn-mono">{CONTRACT_ID ? short(CONTRACT_ID) : 'not set'}</span>
+          </div>
+
+          <div className="sn-side-section">
+            <span className="sn-side-label">Network</span>
+            <span className="sn-side-value">Stellar Testnet</span>
+          </div>
+
+          <div className="sn-side-spacer" />
+
+          <a href="#/watch" className="sn-side-link">
+            <IconRadar size={14} />
+            Sentinel Watch
+          </a>
+          <button className="sn-side-link sn-side-link--danger" onClick={disconnect}>
+            <IconLogout size={14} />
+            Disconnect
           </button>
-        ) : (
-          <>
-            {/* Connection */}
-            <div
-              className="conn-row"
-              style={{ ...card, marginBottom: '18px', display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <div>
-                <div style={{ color: '#10b981', fontSize: '11px', fontWeight: 'bold' }}>● CONNECTED</div>
-                <div style={{ fontSize: '12px', color: '#64748b', fontFamily: 'monospace', marginTop: '4px' }}>
-                  {short(pubKey)}
-                  {isRecipient && <span style={{ color: '#38bdf8' }}> · owner</span>}
-                </div>
-              </div>
-              <button
-                className="btn"
-                onClick={disconnect}
-                style={{ background: 'none', border: '1px solid #334155', color: '#94a3b8', fontSize: '11px', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}
-              >
-                Disconnect
-              </button>
-            </div>
+        </aside>
 
-            {/* Wallet balance (Level 1: fetch + clearly display the connected wallet's XLM balance) */}
-            <div
-              className="balance-row stat-card"
-              style={{
-                ...card,
-                marginBottom: '18px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: 'linear-gradient(135deg, rgba(56,189,248,0.08), rgba(16,185,129,0.05))',
-                borderColor: '#334155',
-              }}
-            >
-              <div>
-                <div style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 700, letterSpacing: '0.5px' }}>
-                  💳 WALLET BALANCE
-                </div>
-                <div style={{ fontSize: '26px', fontWeight: 800, marginTop: '4px' }}>
-                  {xlmBalance === null ? (
-                    <span style={{ fontSize: '14px', color: '#94a3b8', fontWeight: 400 }}>Loading…</span>
-                  ) : (
-                    <>
-                      {fromStroops(xlmBalance).toFixed(2)} <span style={{ fontSize: '14px', color: '#94a3b8' }}>XLM</span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <a
-                href="https://friendbot.stellar.org"
-                target="_blank"
-                rel="noreferrer"
-                className="balance-pill"
-                style={{
-                  fontSize: '11px',
-                  color: '#38bdf8',
-                  border: '1px solid #334155',
-                  borderRadius: '20px',
-                  padding: '6px 12px',
-                  textDecoration: 'none',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                🚰 Get test XLM
-              </a>
+        <main className="sn-dash-main">
+          <div className="sn-dash-header">
+            <div>
+              <h1 className="sn-dash-title">Campaign overview</h1>
+              <p className="sn-dash-subtitle">Live funding progress and on-chain activity, synced from Stellar.</p>
             </div>
+            <a href="https://friendbot.stellar.org" target="_blank" rel="noreferrer" className="sn-footer-link">
+              <IconDroplet size={13} />
+              Get test XLM
+            </a>
+          </div>
 
-            {/* Progress */}
-            <div className="stat-card" style={{ ...card, marginBottom: '18px' }}>
-              {loadingCampaign && !campaign ? (
-                <div style={{ fontSize: '13px', color: '#94a3b8', padding: '6px 0' }}>
-                  ⏳ Loading campaign data…
+          {!CONTRACT_ID && (
+            <div
+              className="sn-card sn-card-block"
+              style={{ borderColor: 'var(--danger)', background: 'var(--danger-bg)', color: 'var(--danger)', fontSize: 13 }}
+            >
+              <strong>VITE_CONTRACT_ID</strong> is not set. After deploying, add the Contract ID to{' '}
+              <code className="sn-mono">frontend/.env</code>.
+            </div>
+          )}
+
+          {/* Level 1: connected wallet's own XLM balance, clearly displayed */}
+          <div className="sn-stat-grid">
+            <div className="sn-stat-card">
+              <span className="sn-stat-label">
+                <IconWallet size={12} />
+                Wallet balance
+              </span>
+              <span className="sn-stat-value">
+                {xlmBalance === null ? (
+                  <span className="sn-stat-loading">Loading…</span>
+                ) : (
+                  <>
+                    {fromStroops(xlmBalance).toFixed(2)} <small>XLM</small>
+                  </>
+                )}
+              </span>
+            </div>
+            <div className="sn-stat-card">
+              <span className="sn-stat-label">
+                <IconActivity size={12} />
+                Total raised
+              </span>
+              <span className="sn-stat-value">
+                {fromStroops(total).toFixed(2)} <small>/ {fromStroops(target).toFixed(2)} XLM</small>
+              </span>
+            </div>
+            <div className="sn-stat-card">
+              <span className="sn-stat-label">Your contribution</span>
+              <span className="sn-stat-value">
+                {fromStroops(myContribution).toFixed(2)} <small>XLM</small>
+              </span>
+            </div>
+            <div className="sn-stat-card">
+              <span className="sn-stat-label">
+                <IconClock size={12} />
+                Time remaining
+              </span>
+              <span className="sn-stat-value" style={{ fontSize: 19 }}>
+                {initialized ? (running ? fmtCountdown(deadline - now) : 'Ended') : '—'}
+              </span>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="sn-card sn-card-block">
+            {loadingCampaign && !campaign ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'var(--text-secondary)' }}>
+                <IconClock size={13} />
+                Loading campaign data…
+              </div>
+            ) : (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+                  <span className="sn-label">Progress toward goal</span>
+                  <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 700 }}>{progress.toFixed(0)}%</span>
+                </div>
+                <div className="sn-progress-track">
+                  <div className="sn-progress-fill" style={{ width: `${progress}%`, background: progressColor }} />
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="sn-content-grid">
+            {/* Campaign activity — deposit/claim/refund events, real-time */}
+            <div className="sn-card sn-card-block sn-activity-panel">
+              <div className="sn-label" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <IconActivity size={13} />
+                Campaign activity
+              </div>
+              {events.length === 0 ? (
+                <div className="sn-activity-empty">
+                  No activity yet — donations, claims, and refunds will appear here in real time.
                 </div>
               ) : (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '24px', fontWeight: 800 }}>
-                      {fromStroops(total).toFixed(2)}{' '}
-                      <span style={{ fontSize: '14px', color: '#94a3b8' }}>
-                        / {fromStroops(target).toFixed(2)} XLM
-                      </span>
-                    </span>
-                    <span style={{ fontSize: '13px', color: '#38bdf8', fontWeight: 700 }}>{progress.toFixed(0)}%</span>
-                  </div>
-                  <div style={{ height: '10px', background: '#0b1220', borderRadius: '6px', overflow: 'hidden', border: '1px solid #334155' }}>
-                    <div
-                      className="progress-fill"
-                      style={{
-                        width: `${progress}%`,
-                        height: '100%',
-                        background: state === 'failed' ? '#ef4444' : state === 'success' ? '#10b981' : '#38bdf8',
-                      }}
-                    />
-                  </div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', justifyContent: 'space-between', marginTop: '12px', fontSize: '12px', color: '#94a3b8' }}>
-                    <span>⏳ {initialized ? (running ? fmtCountdown(deadline - now) : 'Ended') : '—'}</span>
-                    <span>Your contribution: <strong style={{ color: '#f8fafc' }}>{fromStroops(myContribution).toFixed(2)} XLM</strong></span>
-                  </div>
-                </>
+                <div>
+                  {events.map((e) => {
+                    const meta = EVENT_META[e.type];
+                    return (
+                      <div key={e.id} className="sn-activity-row">
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', minWidth: 0 }}>
+                          <span className="sn-activity-dot" style={{ background: meta.dot }} />
+                          <span style={{ whiteSpace: 'nowrap' }}>{meta.label}</span>
+                          <span className="sn-mono" style={{ color: 'var(--text-muted)', fontSize: 12 }}>
+                            {short(e.actor)}
+                          </span>
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{relativeTime(e.closedAt, now * 1000)}</span>
+                          <strong className="sn-mono" style={{ color: 'var(--text)' }}>
+                            {fromStroops(e.amount).toFixed(2)} XLM
+                          </strong>
+                          <a
+                            href={`https://stellar.expert/explorer/testnet/tx/${e.txHash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="View transaction"
+                            style={{ color: 'var(--accent)', fontSize: 13, lineHeight: 1 }}
+                          >
+                            ↗
+                          </a>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
-            {/* Activity feed (real-time event streaming) */}
-            {events.length > 0 && (
-              <div style={{ ...card, marginBottom: '18px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', marginBottom: '10px', letterSpacing: '0.5px' }}>
-                  🔴 LIVE ACTIVITY
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
-                  {events.map((e) => (
-                    <div key={e.id} className="activity-row" style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
-                      <span style={{ color: '#cbd5e1' }}>
-                        {{ deposit: '💰', claim: '✅', refund: '↩️' }[e.type]}{' '}
-                        {{ deposit: 'Donation', claim: 'Claim', refund: 'Refund' }[e.type]}
-                        {' · '}
-                        <span style={{ fontFamily: 'monospace', color: '#64748b' }}>{short(e.actor)}</span>
-                      </span>
-                      <strong style={{ color: '#f8fafc' }}>{fromStroops(e.amount).toFixed(2)} XLM</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Actions */}
-            {state === 'running' && (
-              <>
-                <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '5px' }}>
-                  Donation Amount (XLM)
-                </label>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  style={{ ...input, marginBottom: '14px' }}
-                  placeholder="e.g. 10"
-                />
+            <div className="sn-card sn-card-block">
+              <div className="sn-label" style={{ marginBottom: 14 }}>
+                Actions
+              </div>
+
+              {state === 'running' && (
+                <>
+                  <label style={{ display: 'block', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                    Donation amount (XLM)
+                  </label>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="sn-input"
+                    style={{ marginBottom: 14 }}
+                    placeholder="e.g. 10"
+                  />
+                  <button
+                    className="sn-btn sn-btn--primary sn-btn--block"
+                    onClick={handleDeposit}
+                    disabled={tx === 'pending' || !CONTRACT_ID}
+                  >
+                    {tx === 'pending' ? 'Processing...' : 'Donate'}
+                  </button>
+                </>
+              )}
+
+              {state === 'success' && (
                 <button
-                  className="btn"
-                  onClick={handleDeposit}
-                  disabled={tx === 'pending' || !CONTRACT_ID}
+                  className="sn-btn sn-btn--primary sn-btn--block"
+                  onClick={handleClaim}
+                  disabled={tx === 'pending' || !isRecipient || campaign?.claimed}
+                  title={!isRecipient ? 'Only the campaign owner can withdraw' : ''}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                >
+                  {campaign?.claimed ? (
+                    <>
+                      <IconCheckCircle size={15} />
+                      Funds withdrawn
+                    </>
+                  ) : isRecipient ? (
+                    'Withdraw funds (claim)'
+                  ) : (
+                    'Campaign successful · owner will withdraw'
+                  )}
+                </button>
+              )}
+
+              {state === 'failed' && (
+                <button
+                  className="sn-btn sn-btn--primary sn-btn--block"
+                  onClick={handleRefund}
+                  disabled={tx === 'pending' || myContribution <= 0n}
+                >
+                  {myContribution > 0n ? 'Get your refund (refund)' : 'No contribution to refund'}
+                </button>
+              )}
+
+              {state === 'none' && <div className="sn-activity-empty">Waiting for the campaign to start.</div>}
+
+              {tx !== 'idle' && message && (
+                <div
                   style={{
-                    width: '100%',
-                    padding: '16px',
-                    backgroundColor: tx === 'pending' ? '#334155' : '#10b981',
-                    color: '#fff',
-                    fontSize: '16px',
-                    fontWeight: 700,
-                    border: 'none',
-                    borderRadius: '12px',
-                    cursor: tx === 'pending' ? 'not-allowed' : 'pointer',
+                    marginTop: 16,
+                    padding: 14,
+                    borderRadius: 8,
+                    fontSize: 13,
+                    background: `var(--${msgVariant}-bg)`,
+                    border: `1px solid var(--${msgVariant})`,
+                    color: `var(--${msgVariant})`,
                   }}
                 >
-                  {tx === 'pending' ? 'Processing...' : 'Donate'}
-                </button>
-              </>
-            )}
-
-            {state === 'success' && (
-              <button
-                className="btn"
-                onClick={handleClaim}
-                disabled={tx === 'pending' || !isRecipient || campaign?.claimed}
-                style={{
-                  width: '100%',
-                  padding: '16px',
-                  backgroundColor: campaign?.claimed ? '#334155' : '#10b981',
-                  color: '#fff',
-                  fontSize: '16px',
-                  fontWeight: 700,
-                  border: 'none',
-                  borderRadius: '12px',
-                  cursor: !isRecipient || campaign?.claimed ? 'not-allowed' : 'pointer',
-                }}
-                title={!isRecipient ? 'Only the campaign owner can withdraw' : ''}
-              >
-                {campaign?.claimed
-                  ? '✅ Funds withdrawn'
-                  : isRecipient
-                    ? 'Withdraw Funds (claim)'
-                    : 'Campaign successful · owner will withdraw'}
-              </button>
-            )}
-
-            {state === 'failed' && (
-              <button
-                className="btn"
-                onClick={handleRefund}
-                disabled={tx === 'pending' || myContribution <= 0n}
-                style={{
-                  width: '100%',
-                  padding: '16px',
-                  backgroundColor: myContribution > 0n ? '#38bdf8' : '#334155',
-                  color: myContribution > 0n ? '#0f172a' : '#94a3b8',
-                  fontSize: '16px',
-                  fontWeight: 700,
-                  border: 'none',
-                  borderRadius: '12px',
-                  cursor: myContribution > 0n ? 'pointer' : 'not-allowed',
-                }}
-              >
-                {myContribution > 0n ? 'Get Your Refund (refund)' : 'No contribution to refund'}
-              </button>
-            )}
-
-            {/* Transaction status */}
-            {tx !== 'idle' && message && (
-              <div
-                style={{
-                  marginTop: '15px',
-                  padding: '14px',
-                  borderRadius: '8px',
-                  fontSize: '13px',
-                  backgroundColor: msgBg,
-                  border: `1px solid ${msgBorder}`,
-                  color: msgColor,
-                }}
-              >
-                <div style={{ fontWeight: 'bold' }}>
-                  {tx === 'pending' && '⏳ Transaction pending...'}
-                  {tx === 'success' && '✅ Success'}
-                  {tx === 'fail' && '❌ Error'}
-                </div>
-                <div style={{ marginTop: '4px', wordBreak: 'break-word' }}>{message}</div>
-                {txHash && (
-                  <div style={{ fontSize: '12px', color: '#94a3b8', fontFamily: 'monospace', marginTop: '6px' }}>
-                    Hash:{' '}
-                    <a
-                      href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="tx-link"
-                      style={{ color: '#38bdf8' }}
-                    >
-                      {short(txHash)}
-                    </a>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>
+                    <MsgIcon size={14} />
+                    {tx === 'pending' && 'Transaction pending'}
+                    {tx === 'success' && 'Success'}
+                    {tx === 'fail' && 'Error'}
                   </div>
-                )}
-              </div>
-            )}
-          </>
-        )}
+                  <div style={{ marginTop: 4, wordBreak: 'break-word', color: 'var(--text-secondary)' }}>{message}</div>
+                  {txHash && (
+                    <div className="sn-mono" style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>
+                      Hash:{' '}
+                      <a
+                        href={`https://stellar.expert/explorer/testnet/tx/${txHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{ color: 'var(--accent)' }}
+                      >
+                        {short(txHash)}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
       </div>
-
-      <p style={{ color: '#475569', fontSize: '12px', marginTop: '18px' }}>
-        Contract: {CONTRACT_ID ? short(CONTRACT_ID) : 'not set'} · Network: Testnet
-      </p>
     </div>
   );
 }

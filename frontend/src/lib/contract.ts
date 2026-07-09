@@ -167,6 +167,8 @@ export interface ActivityEvent {
   actor: string;
   amount: bigint;
   ledger: number;
+  closedAt: string; // ISO timestamp, from the RPC's ledgerClosedAt
+  txHash: string;
 }
 
 export async function getLatestLedger(): Promise<number> {
@@ -199,6 +201,8 @@ export async function getRecentEvents(
       actor,
       amount: BigInt(value ?? 0),
       ledger: e.ledger,
+      closedAt: e.ledgerClosedAt,
+      txHash: e.txHash,
     });
   }
   return { events, latestLedger: resp.latestLedger };

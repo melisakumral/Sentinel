@@ -66,7 +66,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | Smart contract deployment workflow | ✅ `stellar contract deploy`/`invoke` steps below, real deployment |
 | Mobile-responsive frontend | ✅ `app-shell`/`app-card` + `@media (max-width: 480px)` (`frontend/src/App.css`) |
 | Error handling & loading states | ✅ `classifyError`, `loadingCampaign` state, transaction status box |
-| Contract + frontend tests | ✅ 8 Rust tests (`cargo test --workspace`) + 7 Vitest tests (`npm run test`) = **15 tests** |
+| Contract + frontend tests | ✅ 8 Rust tests (`cargo test --workspace`) + 42 Vitest tests (`npm run test`) = **50 tests** |
 | Production-ready architecture | ✅ Cargo workspace, pure/testable modules (`stroops.ts`, `errors.ts`), CI |
 | Documentation & demo presentation | ✅ This README + the delivery info below |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
@@ -74,6 +74,28 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | Live demo link (Vercel etc.) | ⬜ Manual — see "Remaining Manual Steps" |
 | Screenshots (mobile, CI, test output) | ⬜ Manual — see "Remaining Manual Steps" |
 | Demo video (1-2 min) | ⬜ Manual — see "Remaining Manual Steps" |
+
+## 🛰️ Sentinel Watch — Soroban Monitoring, Alerts & Simulator
+
+Alongside the crowdfunding app, `frontend/src/watch/` is a second, self-contained
+frontend module with its own "mission control" visual identity (amber/cyan on
+near-black, sidebar navigation) — a lightweight "Tenderly for Stellar": live
+monitoring, alerting, and transaction dry-runs for **any** Soroban contract, not
+just Sentinel's own. Reachable at `#/watch` (a link is shown at the bottom of
+the main app), it's a genuinely separate app sharing only the wallet kit and
+RPC endpoint config.
+
+| Panel | What it does |
+|---|---|
+| 📡 **Event Feed** | Polls `getEvents` every 6s for any Contract ID you enter, decoding topics/value on a best-effort basis (contract-agnostic — no fixed event schema) |
+| 📊 **Analytics** | Computed client-side from the fetched window: event counts by kind, unique actors, total volume, a cumulative-volume sparkline (hand-rolled SVG, no chart library) |
+| 🚨 **Alerts** | User-defined **threshold** rules (`"deposit" > 500 XLM`) and **frequency** rules (`5+ "refund" events in 60s`), evaluated live against incoming events, persisted per-contract in `localStorage`; fires in-app toasts + optional browser `Notification`s |
+| 🧪 **Simulator** | Dry-runs any `contract.call(fn, ...args)` via the Soroban RPC's `simulateTransaction` — typed argument encoding (address/string/symbol/bool/u32…i128), no signature, no fee, no state change. "Simulate as" any funded testnet address, not just your own wallet |
+
+Pure logic (`argEncoding.ts`, `alertRules.ts`, `format.ts`) is unit-tested the
+same way as the rest of the frontend (`frontend/src/watch/lib/*.test.ts`);
+network calls (`sorobanWatch.ts`) follow `lib/contract.ts`'s existing pattern
+and are exercised manually against testnet.
 
 ## 🔗 Delivery Info
 
