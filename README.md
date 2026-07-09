@@ -29,6 +29,20 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 - **`frontend/`** — React + TypeScript. Contract state is polled every 8s; contract events are also streamed via the `getEvents` RPC every 6s to power a real-time **Activity Feed**.
 - **`.github/workflows/ci.yml`** — every push/PR runs the contract suite (`cargo test --workspace`, wasm build) and the frontend suite (`lint`, `vitest`, `tsc`+`vite build`).
 
+## 🥉 Level 1 Requirements — Coverage
+
+| Requirement | Status |
+|-----------|-------|
+| Freighter wallet set up, Stellar Testnet | ✅ `frontend/src/lib/wallet.ts` (`WalletNetwork.TESTNET`, `FREIGHTER_ID`) |
+| Wallet connect | ✅ `connectWallet()` in App.tsx |
+| Wallet disconnect | ✅ `disconnect()` in App.tsx |
+| Fetch the connected wallet's XLM balance | ✅ `getXlmBalance()` (`frontend/src/lib/contract.ts`) |
+| Display the balance clearly in the UI | ✅ "Wallet Balance" card in App.tsx |
+| Send an XLM transaction on testnet | ✅ `deposit()` — a real XLM transfer to the contract |
+| Success/failure feedback shown to the user | ✅ App.tsx transaction status box |
+| Transaction hash / confirmation shown | ✅ tx hash linked to stellar.expert |
+| Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
+
 ## 🏆 Level 2 Requirements — Coverage
 
 | Requirement | Status |
