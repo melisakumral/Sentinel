@@ -1,3 +1,7 @@
+[workspace]
+members = [".", "registry"]
+resolver = "2"
+
 [package]
 name = "sentinel-contract"
 version = "0.1.0"
@@ -14,6 +18,7 @@ soroban-sdk = "22"
 
 [dev-dependencies]
 soroban-sdk = { version = "22", features = ["testutils"] }
+sentinel-registry = { path = "registry" }
 
 # Soroban için optimize edilmiş release profili (küçük .wasm çıktısı)
 [profile.release]

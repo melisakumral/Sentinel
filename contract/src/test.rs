@@ -1,5 +1,6 @@
 #![cfg(test)]
 use super::*;
+use sentinel_registry::{SentinelRegistry, SentinelRegistryClient};
 use soroban_sdk::testutils::{Address as _, Ledger};
 use soroban_sdk::{token, Address, Env};
 
@@ -8,6 +9,11 @@ fn setup_token(env: &Env) -> Address {
     let issuer = Address::generate(env);
     let sac = env.register_stellar_asset_contract_v2(issuer);
     sac.address()
+}
+
+// Registry sözleşmesini deploy eder ve adresini döner (inter-contract call hedefi).
+fn setup_registry(env: &Env) -> Address {
+    env.register(SentinelRegistry, ())
 }
 
 #[test]
@@ -25,11 +31,13 @@ fn test_success_and_claim() {
     token_admin.mint(&alice, &1000);
     token_admin.mint(&bob, &1000);
 
+    let registry_addr = setup_registry(&env);
+
     let cid = env.register(SentinelContract, ());
     let client = SentinelContractClient::new(&env, &cid);
 
     // Hedef 100, deadline t=10_000
-    client.initialize(&recipient, &token_addr, &100, &10_000);
+    client.initialize(&recipient, &token_addr, &registry_addr, &100, &10_000);
     assert_eq!(client.get_state(), State::Running);
 
     client.deposit(&alice, &60);
@@ -48,6 +56,14 @@ fn test_success_and_claim() {
     assert_eq!(token.balance(&recipient), 110); // fon sahibe gitti
     assert_eq!(token.balance(&cid), 0);
     assert!(client.is_claimed());
+
+    // Inter-contract call: kampanya sonucu registry'de doğru şekilde kayıtlı mı?
+    let registry_client = SentinelRegistryClient::new(&env, &registry_addr);
+    let result = registry_client.get_result(&cid).unwrap();
+    assert_eq!(result.recipient, recipient);
+    assert_eq!(result.total, 110);
+    assert!(result.success);
+    assert_eq!(registry_client.count(), 1);
 }
 
 #[test]
@@ -63,11 +79,13 @@ fn test_failure_and_refund() {
     let token = token::Client::new(&env, &token_addr);
     token_admin.mint(&alice, &1000);
 
+    let registry_addr = setup_registry(&env);
+
     let cid = env.register(SentinelContract, ());
     let client = SentinelContractClient::new(&env, &cid);
 
     // Yüksek hedef → ulaşılamayacak
-    client.initialize(&recipient, &token_addr, &1000, &10_000);
+    client.initialize(&recipient, &token_addr, &registry_addr, &1000, &10_000);
     client.deposit(&alice, &100);
     assert_eq!(token.balance(&alice), 900);
 
@@ -78,6 +96,12 @@ fn test_failure_and_refund() {
     assert_eq!(refunded, 100);
     assert_eq!(token.balance(&alice), 1000); // parası geri geldi
     assert_eq!(client.get_contribution(&alice), 0);
+
+    // Registry başarısız sonucu kaydetmiş olmalı.
+    let registry_client = SentinelRegistryClient::new(&env, &registry_addr);
+    let result = registry_client.get_result(&cid).unwrap();
+    assert!(!result.success);
+    assert_eq!(registry_client.count(), 1);
 }
 
 #[test]
@@ -90,10 +114,11 @@ fn test_deposit_after_deadline_panics() {
     let alice = Address::generate(&env);
     let token_addr = setup_token(&env);
     token::StellarAssetClient::new(&env, &token_addr).mint(&alice, &1000);
+    let registry_addr = setup_registry(&env);
 
     let cid = env.register(SentinelContract, ());
     let client = SentinelContractClient::new(&env, &cid);
-    client.initialize(&recipient, &token_addr, &100, &10_000);
+    client.initialize(&recipient, &token_addr, &registry_addr, &100, &10_000);
 
     env.ledger().with_mut(|li| li.timestamp = 10_001);
     client.deposit(&alice, &50); // panik: CampaignEnded
@@ -109,12 +134,43 @@ fn test_refund_when_goal_reached_panics() {
     let alice = Address::generate(&env);
     let token_addr = setup_token(&env);
     token::StellarAssetClient::new(&env, &token_addr).mint(&alice, &1000);
+    let registry_addr = setup_registry(&env);
 
     let cid = env.register(SentinelContract, ());
     let client = SentinelContractClient::new(&env, &cid);
-    client.initialize(&recipient, &token_addr, &100, &10_000);
+    client.initialize(&recipient, &token_addr, &registry_addr, &100, &10_000);
     client.deposit(&alice, &150); // hedef aşıldı
 
     env.ledger().with_mut(|li| li.timestamp = 10_001);
     client.refund(&alice); // panik: GoalReached
+}
+
+#[test]
+fn test_double_refund_is_idempotent_in_registry() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let recipient = Address::generate(&env);
+    let alice = Address::generate(&env);
+    let bob = Address::generate(&env);
+    let token_addr = setup_token(&env);
+    let token_admin = token::StellarAssetClient::new(&env, &token_addr);
+    token_admin.mint(&alice, &1000);
+    token_admin.mint(&bob, &1000);
+    let registry_addr = setup_registry(&env);
+
+    let cid = env.register(SentinelContract, ());
+    let client = SentinelContractClient::new(&env, &cid);
+    client.initialize(&recipient, &token_addr, &registry_addr, &1000, &10_000);
+    client.deposit(&alice, &100);
+    client.deposit(&bob, &50);
+
+    env.ledger().with_mut(|li| li.timestamp = 10_001);
+
+    // İki farklı bağışçı sırayla refund çağırır; registry sadece ilkini kaydetmeli.
+    client.refund(&alice);
+    client.refund(&bob);
+
+    let registry_client = SentinelRegistryClient::new(&env, &registry_addr);
+    assert_eq!(registry_client.count(), 1);
 }

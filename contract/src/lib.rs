@@ -2,11 +2,19 @@
 //! Sentinel — Stellar/Soroban Crowdfunding (kitle fonlama) sözleşmesi.
 //!
 //! Akış:
-//! 1. `initialize` — sahip; hedef tutar, son tarih (deadline) ve token'ı belirler.
+//! 1. `initialize` — sahip; hedef tutar, son tarih (deadline), token ve bir
+//!    Sentinel Registry sözleşme adresi belirler.
 //! 2. `deposit`    — bağışçılar sözleşmeye gerçek token (XLM) gönderir.
 //! 3a. `claim`     — deadline sonrası hedefe ULAŞILDIYSA fonlar sahibe aktarılır.
 //! 3b. `refund`    — deadline sonrası hedefe ULAŞILAMADIYSA bağışçı parasını geri alır.
-use soroban_sdk::{contract, contractimpl, contracterror, contracttype, token, Address, Env};
+//!
+//! `claim`/`refund` sonunda kampanya, nihai sonucunu **inter-contract call** ile
+//! Sentinel Registry sözleşmesine bildirir (`notify_registry`) ve zincir üstünde
+//! bir olay (event) yayınlar — böylece frontend gerçek zamanlı akışı dinleyebilir.
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, symbol_short, token, vec, Address, Env,
+    IntoVal, Symbol, Val,
+};
 
 /// Depolama anahtarları.
 #[contracttype]
@@ -14,6 +22,7 @@ use soroban_sdk::{contract, contractimpl, contracterror, contracttype, token, Ad
 pub enum DataKey {
     Recipient,             // Address — kampanya sahibi
     Token,                 // Address — bağış token'ı (native XLM SAC)
+    Registry,              // Address — sonuçların bildirileceği Sentinel Registry sözleşmesi
     Target,                // i128    — hedef tutar (stroop)
     Deadline,              // u64     — bitiş zamanı (unix saniye)
     Total,                 // i128    — toplanan toplam (stroop)
@@ -37,11 +46,11 @@ pub enum State {
 pub enum Error {
     AlreadyInitialized = 1,
     NotInitialized = 2,
-    CampaignEnded = 3,     // deadline geçti, bağış kapalı
-    CampaignRunning = 4,   // deadline gelmedi, claim/refund yok
+    CampaignEnded = 3,   // deadline geçti, bağış kapalı
+    CampaignRunning = 4, // deadline gelmedi, claim/refund yok
     InvalidAmount = 5,
-    GoalNotReached = 6,    // claim için hedef tutmadı
-    GoalReached = 7,       // refund yok, kampanya başarılı
+    GoalNotReached = 6, // claim için hedef tutmadı
+    GoalReached = 7,    // refund yok, kampanya başarılı
     AlreadyClaimed = 8,
     NothingToRefund = 9,
 }
@@ -54,12 +63,14 @@ impl SentinelContract {
     /// Kampanyayı bir kez kurar.
     /// - `recipient`: fonların gideceği sahip cüzdanı.
     /// - `token`: bağış token'ı (testnet native XLM SAC adresi).
+    /// - `registry`: sonuçların bildirileceği Sentinel Registry sözleşmesi.
     /// - `target`: hedef tutar (stroop; 1 XLM = 10_000_000 stroop).
     /// - `deadline`: bitiş zamanı (unix saniye).
     pub fn initialize(
         env: Env,
         recipient: Address,
         token: Address,
+        registry: Address,
         target: i128,
         deadline: u64,
     ) -> Result<(), Error> {
@@ -71,6 +82,7 @@ impl SentinelContract {
         }
         env.storage().instance().set(&DataKey::Recipient, &recipient);
         env.storage().instance().set(&DataKey::Token, &token);
+        env.storage().instance().set(&DataKey::Registry, &registry);
         env.storage().instance().set(&DataKey::Target, &target);
         env.storage().instance().set(&DataKey::Deadline, &deadline);
         env.storage().instance().set(&DataKey::Total, &0i128);
@@ -101,12 +113,15 @@ impl SentinelContract {
         total += amount;
         env.storage().instance().set(&DataKey::Total, &total);
 
-        let key = DataKey::Contribution(donor);
+        let key = DataKey::Contribution(donor.clone());
         let mut given: i128 = env.storage().persistent().get(&key).unwrap_or(0);
         given += amount;
         env.storage().persistent().set(&key, &given);
         env.storage().persistent().extend_ttl(&key, 100, 200);
         env.storage().instance().extend_ttl(100, 200);
+
+        env.events()
+            .publish((symbol_short!("deposit"), donor), amount);
 
         Ok(total)
     }
@@ -135,6 +150,11 @@ impl SentinelContract {
 
         env.storage().instance().set(&DataKey::Claimed, &true);
         env.storage().instance().extend_ttl(100, 200);
+
+        env.events()
+            .publish((symbol_short!("claim"), recipient.clone()), balance);
+        Self::notify_registry(&env, &recipient, balance, Self::target(&env), true);
+
         Ok(balance)
     }
 
@@ -162,6 +182,14 @@ impl SentinelContract {
         let token_addr: Address = env.storage().instance().get(&DataKey::Token).unwrap();
         let token = token::Client::new(&env, &token_addr);
         token.transfer(&env.current_contract_address(), &donor, &amount);
+
+        env.events()
+            .publish((symbol_short!("refund"), donor), amount);
+
+        // Kampanya nihai olarak başarısız oldu; registry'ye bildir (idempotent —
+        // sonraki her refund çağrısında tekrar bildirilse de registry tarafında yok sayılır).
+        let recipient: Address = env.storage().instance().get(&DataKey::Recipient).unwrap();
+        Self::notify_registry(&env, &recipient, Self::total(&env), Self::target(&env), false);
 
         Ok(amount)
     }
@@ -197,6 +225,10 @@ impl SentinelContract {
         env.storage().instance().get(&DataKey::Recipient)
     }
 
+    pub fn get_registry(env: Env) -> Option<Address> {
+        env.storage().instance().get(&DataKey::Registry)
+    }
+
     pub fn get_contribution(env: Env, donor: Address) -> i128 {
         env.storage()
             .persistent()
@@ -228,6 +260,27 @@ impl SentinelContract {
 
     fn deadline(env: &Env) -> u64 {
         env.storage().instance().get(&DataKey::Deadline).unwrap_or(0)
+    }
+
+    /// Sentinel Registry sözleşmesine gerçek bir inter-contract call ile nihai
+    /// sonucu bildirir. Registry adresi çözümlü kod (statik client) yerine
+    /// `invoke_contract` ile dinamik çağrılır, böylece bu sözleşme registry'nin
+    /// crate'ine derleme zamanı bağımlı olmaz.
+    fn notify_registry(env: &Env, recipient: &Address, total: i128, target: i128, success: bool) {
+        let Some(registry): Option<Address> = env.storage().instance().get(&DataKey::Registry)
+        else {
+            return;
+        };
+        let this = env.current_contract_address();
+        let args: soroban_sdk::Vec<Val> = vec![
+            env,
+            this.into_val(env),
+            recipient.into_val(env),
+            total.into_val(env),
+            target.into_val(env),
+            success.into_val(env),
+        ];
+        let _: () = env.invoke_contract(&registry, &Symbol::new(env, "record"), args);
     }
 }
 
