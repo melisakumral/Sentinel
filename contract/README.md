@@ -1,4 +1,4 @@
-# CoreSplit Contract (Soroban / Rust) — Crowdfunding
+# Sentinel Contract (Soroban / Rust) — Crowdfunding
 
 Testnet üzerinde çalışan bir **kitle fonlama** sözleşmesi. Bağışlar gerçek token (native XLM) olarak sözleşmede toplanır; süre sonunda hedefe ulaşıldıysa fon sahibe aktarılır, ulaşılamadıysa bağışçılar iadesini alır.
 
@@ -27,7 +27,7 @@ cargo install --locked stellar-cli
 ```bash
 cargo test
 cargo build --target wasm32-unknown-unknown --release
-# Çıktı: target/wasm32-unknown-unknown/release/coresplit_contract.wasm
+# Çıktı: target/wasm32-unknown-unknown/release/sentinel_contract.wasm
 ```
 
 ## Deploy (Testnet)
@@ -39,7 +39,7 @@ export OWNER=$(stellar keys address alice)
 
 # 2) Sözleşmeyi yükle -> Contract ID (C...) alırsın
 stellar contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/coresplit_contract.wasm \
+  --wasm target/wasm32-unknown-unknown/release/sentinel_contract.wasm \
   --source alice --network testnet
 export CID=<yukarıdan_gelen_C...>
 

@@ -1,4 +1,4 @@
-// CoreSplit Crowdfunding sözleşmesi ile konuşan yardımcılar.
+// Sentinel Crowdfunding sözleşmesi ile konuşan yardımcılar.
 // Okuma -> simülasyon. Yazma (deposit/claim/refund) -> prepare + imzala + gönder + onay bekle.
 import {
   rpc,

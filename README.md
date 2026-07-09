@@ -1,6 +1,6 @@
-# 🪐 CoreSplit — Merkeziyetsiz Kitle Fonlama (Crowdfunding)
+# 🪐 Sentinel — Merkeziyetsiz Kitle Fonlama (Crowdfunding)
 
-CoreSplit, Stellar/Soroban üzerinde çalışan bir **kitle fonlama** dApp'idir. Proje sahibi bir hedef tutar ve süre belirler; bağışçılar cüzdanlarını bağlayıp doğrudan sözleşmeye XLM gönderir. Süre dolduğunda:
+Sentinel, Stellar/Soroban üzerinde çalışan bir **kitle fonlama** dApp'idir. Proje sahibi bir hedef tutar ve süre belirler; bağışçılar cüzdanlarını bağlayıp doğrudan sözleşmeye XLM gönderir. Süre dolduğunda:
 
 - **Hedefe ulaşıldıysa** → fonlar proje sahibine aktarılır (`claim`).
 - **Ulaşılamadıysa** → bağışlar otomatik olarak bağışçılara iade edilir (`refund`).
@@ -37,7 +37,7 @@ Aracı yok, her hareket zincirde şeffaf, süreç akıllı sözleşmeyle otomati
 ## 🗂️ Proje Yapısı
 
 ```
-CoreSplit/
+Sentinel/
 ├─ contract/            # Rust / Soroban crowdfunding sözleşmesi
 │  └─ src/
 │     ├─ lib.rs         # initialize, deposit, claim, refund, get_state...
@@ -68,7 +68,7 @@ stellar keys generate --global alice --network testnet --fund
 export OWNER=$(stellar keys address alice)
 
 stellar contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/coresplit_contract.wasm \
+  --wasm target/wasm32-unknown-unknown/release/sentinel_contract.wasm \
   --source alice --network testnet
 export CID=<gelen_Contract_ID>
 
@@ -102,7 +102,7 @@ Repo yerel olarak commit'lendi. Kendi GitHub'ına bağlamak için:
 
 ```bash
 git branch -M main
-git remote add origin https://github.com/<kullanıcı>/coresplit.git
+git remote add origin https://github.com/<kullanıcı>/sentinel.git
 git push -u origin main
 ```
 

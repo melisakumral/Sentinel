@@ -25,8 +25,8 @@ fn test_success_and_claim() {
     token_admin.mint(&alice, &1000);
     token_admin.mint(&bob, &1000);
 
-    let cid = env.register(CoreSplitContract, ());
-    let client = CoreSplitContractClient::new(&env, &cid);
+    let cid = env.register(SentinelContract, ());
+    let client = SentinelContractClient::new(&env, &cid);
 
     // Hedef 100, deadline t=10_000
     client.initialize(&recipient, &token_addr, &100, &10_000);
@@ -63,8 +63,8 @@ fn test_failure_and_refund() {
     let token = token::Client::new(&env, &token_addr);
     token_admin.mint(&alice, &1000);
 
-    let cid = env.register(CoreSplitContract, ());
-    let client = CoreSplitContractClient::new(&env, &cid);
+    let cid = env.register(SentinelContract, ());
+    let client = SentinelContractClient::new(&env, &cid);
 
     // Yüksek hedef → ulaşılamayacak
     client.initialize(&recipient, &token_addr, &1000, &10_000);
@@ -91,8 +91,8 @@ fn test_deposit_after_deadline_panics() {
     let token_addr = setup_token(&env);
     token::StellarAssetClient::new(&env, &token_addr).mint(&alice, &1000);
 
-    let cid = env.register(CoreSplitContract, ());
-    let client = CoreSplitContractClient::new(&env, &cid);
+    let cid = env.register(SentinelContract, ());
+    let client = SentinelContractClient::new(&env, &cid);
     client.initialize(&recipient, &token_addr, &100, &10_000);
 
     env.ledger().with_mut(|li| li.timestamp = 10_001);
@@ -110,8 +110,8 @@ fn test_refund_when_goal_reached_panics() {
     let token_addr = setup_token(&env);
     token::StellarAssetClient::new(&env, &token_addr).mint(&alice, &1000);
 
-    let cid = env.register(CoreSplitContract, ());
-    let client = CoreSplitContractClient::new(&env, &cid);
+    let cid = env.register(SentinelContract, ());
+    let client = SentinelContractClient::new(&env, &cid);
     client.initialize(&recipient, &token_addr, &100, &10_000);
     client.deposit(&alice, &150); // hedef aşıldı
 

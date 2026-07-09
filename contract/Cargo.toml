@@ -1,9 +1,9 @@
 [package]
-name = "coresplit-contract"
+name = "sentinel-contract"
 version = "0.1.0"
 edition = "2021"
 publish = false
-description = "CoreSplit - Stellar/Soroban katkı havuzu sözleşmesi (donate / get_total / get_donation)"
+description = "Sentinel - Stellar/Soroban katkı havuzu sözleşmesi (donate / get_total / get_donation)"
 
 [lib]
 crate-type = ["cdylib"]

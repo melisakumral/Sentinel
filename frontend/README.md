@@ -1,4 +1,4 @@
-# CoreSplit Frontend (React + TypeScript + Vite)
+# Sentinel Frontend (React + TypeScript + Vite)
 
 Crowdfunding dApp arayüzü. Çoklu cüzdan (StellarWalletsKit) ile bağlanır, Soroban sözleşmesine `deposit / claim / refund` çağrıları yapar, ilerlemeyi canlı gösterir.
 

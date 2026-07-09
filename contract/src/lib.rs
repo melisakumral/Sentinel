@@ -1,5 +1,5 @@
 #![no_std]
-//! CoreSplit — Stellar/Soroban Crowdfunding (kitle fonlama) sözleşmesi.
+//! Sentinel — Stellar/Soroban Crowdfunding (kitle fonlama) sözleşmesi.
 //!
 //! Akış:
 //! 1. `initialize` — sahip; hedef tutar, son tarih (deadline) ve token'ı belirler.
@@ -47,10 +47,10 @@ pub enum Error {
 }
 
 #[contract]
-pub struct CoreSplitContract;
+pub struct SentinelContract;
 
 #[contractimpl]
-impl CoreSplitContract {
+impl SentinelContract {
     /// Kampanyayı bir kez kurar.
     /// - `recipient`: fonların gideceği sahip cüzdanı.
     /// - `token`: bağış token'ı (testnet native XLM SAC adresi).

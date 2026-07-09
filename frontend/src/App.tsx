@@ -228,7 +228,7 @@ function App() {
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ fontSize: '26px', fontWeight: 800, margin: 0, color: '#38bdf8', letterSpacing: '-1px' }}>
-            CoreSplit <span style={{ fontSize: '14px', color: '#94a3b8' }}>Crowdfunding</span>
+            Sentinel <span style={{ fontSize: '14px', color: '#94a3b8' }}>Crowdfunding</span>
           </h1>
           <span
             style={{

@@ -99,7 +99,7 @@ function App() {
     <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', color: '#f8fafc', fontFamily: 'system-ui, sans-serif', padding: '40px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       
       <div style={{ maxWidth: '500px', width: '100%', backgroundColor: '#1e293b', borderRadius: '16px', padding: '30px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', border: '1px solid #334155' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', margin: '0 0 5px 0', color: '#38bdf8', letterSpacing: '-1px' }}>CoreSplit <span style={{fontSize:'16px', color:'#94a3b8'}}>v1.0</span></h1>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', margin: '0 0 5px 0', color: '#38bdf8', letterSpacing: '-1px' }}>Sentinel <span style={{fontSize:'16px', color:'#94a3b8'}}>v1.0</span></h1>
         <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '30px' }}>Dağıtık Ortak Gider Yönetim Protokolü</p>
 
         {!pubKey ? (
