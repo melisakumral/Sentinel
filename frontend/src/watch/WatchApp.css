@@ -1,21 +1,20 @@
-/* Sentinel Watch — a deliberately distinct visual identity from the
-   crowdfunding app: near-black "mission control" theme, amber/cyan accents,
-   monospace data, sidebar navigation. Scoped entirely under .watch-app so it
-   never leaks into (or clashes with) App.css. */
+/* Sentinel Watch — shares the same "Stellar Blue" enterprise theme as the
+   crowdfunding app and connect gate (see App.css) so the whole product reads
+   as one system. Scoped entirely under .watch-app to avoid leaking styles. */
 
 .watch-app {
-  --watch-bg: #08090d;
-  --watch-bg-alt: #0d0f16;
-  --watch-panel: #12141c;
-  --watch-panel-alt: #171a24;
-  --watch-border: #262a36;
-  --watch-accent: #f59e0b;
-  --watch-accent-2: #22d3ee;
+  --watch-bg: #09090b;
+  --watch-bg-alt: #0d0d10;
+  --watch-panel: #121214;
+  --watch-panel-alt: #17171a;
+  --watch-border: #27272a;
+  --watch-accent: #3b82f6;
+  --watch-accent-2: #6366f1;
   --watch-danger: #f87171;
   --watch-success: #34d399;
-  --watch-text: #e7e9ee;
-  --watch-text-dim: #8892a6;
-  --watch-mono: ui-monospace, 'SFMono-Regular', 'Cascadia Code', Consolas, monospace;
+  --watch-text: #f4f4f5;
+  --watch-text-dim: #a1a1aa;
+  --watch-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   min-height: 100vh;
   display: flex;
@@ -23,14 +22,14 @@
   color: var(--watch-text);
   background-color: var(--watch-bg);
   background-image:
-    radial-gradient(circle at 8% -10%, rgba(245, 158, 11, 0.12), transparent 40%),
-    radial-gradient(circle at 92% 10%, rgba(34, 211, 238, 0.1), transparent 40%),
+    radial-gradient(circle at 8% -10%, rgba(59, 130, 246, 0.14), transparent 40%),
+    radial-gradient(circle at 92% 10%, rgba(99, 102, 241, 0.1), transparent 40%),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 32px);
-  font-family: system-ui, 'Segoe UI', sans-serif;
+  font-family: 'Inter', system-ui, 'Segoe UI', sans-serif;
 }
 
-/* ---------- top bar ---------- */
-.watch-topbar {
+/* ---------- sub bar (below the shared TopNav) ---------- */
+.watch-subbar {
   display: flex;
   align-items: center;
   gap: 20px;
@@ -40,29 +39,8 @@
   background: rgba(13, 15, 22, 0.85);
   backdrop-filter: blur(6px);
   position: sticky;
-  top: 0;
+  top: 56px;
   z-index: 20;
-}
-
-.watch-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--watch-text);
-  text-decoration: none;
-  font-weight: 800;
-  letter-spacing: 1px;
-  font-size: 15px;
-  white-space: nowrap;
-}
-.watch-brand:hover {
-  color: var(--watch-accent-2);
-}
-.watch-logo {
-  font-size: 20px;
-}
-.watch-brand-accent {
-  color: var(--watch-accent);
 }
 
 .watch-contract-form {
@@ -163,7 +141,8 @@
   color: var(--watch-text);
 }
 .watch-nav-icon {
-  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .watch-main {
@@ -547,7 +526,7 @@
 }
 .watch-tag {
   font-size: 10px;
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(59, 130, 246, 0.12);
   border: 1px solid var(--watch-accent);
   color: var(--watch-accent);
   padding: 3px 9px;
@@ -599,7 +578,7 @@
 }
 .watch-btn--primary {
   background: var(--watch-accent);
-  color: #14100a;
+  color: #ffffff;
 }
 .watch-btn--primary:hover:not(:disabled) {
   filter: brightness(1.1);
@@ -636,7 +615,7 @@
   padding: 12px 14px;
   border-radius: 10px;
   font-size: 12.5px;
-  background: rgba(245, 158, 11, 0.07);
+  background: rgba(59, 130, 246, 0.07);
   border: 1px solid var(--watch-border);
   color: var(--watch-text-dim);
   margin-bottom: 16px;
@@ -704,6 +683,9 @@
   to { opacity: 1; transform: translateX(0); }
 }
 .watch-toast-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 700;
   font-size: 13px;
   margin-bottom: 4px;
@@ -722,8 +704,9 @@
 }
 
 @media (max-width: 720px) {
-  .watch-topbar {
+  .watch-subbar {
     padding: 12px 14px;
+    top: 56px;
   }
   .watch-body {
     flex-direction: column;

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { IconActivity, IconCheckShield, IconLock } from './icons';
 import { SentinelLogo } from './Logo';
+import TopNav from './TopNav';
+import { useLanguage } from './i18n/useLanguage';
 
 interface Props {
   connecting: boolean;
@@ -116,8 +118,11 @@ const WALLET_BADGES = [
 ] as const;
 
 export default function ConnectGate({ connecting, errorMessage, onConnect }: Props) {
+  const { t } = useLanguage();
   return (
-    <div className="sn-gate">
+    <div className="sn-gate-page">
+      <TopNav active="home" />
+      <div className="sn-gate">
       <div className="sn-gate-left">
         <div className="sn-gate-left-glow" aria-hidden="true" />
         <div className="sn-brand" style={{ marginBottom: 8 }}>
@@ -125,32 +130,29 @@ export default function ConnectGate({ connecting, errorMessage, onConnect }: Pro
             <SentinelLogo size={18} />
           </div>
           <div>
-            <div className="sn-brand-name">Sentinel</div>
-            <div className="sn-brand-sub">Decentralized crowdfunding</div>
+            <div className="sn-brand-name">{t('brandName')}</div>
+            <div className="sn-brand-sub">{t('brandSub')}</div>
           </div>
         </div>
         <div className="sn-secured-caption">
           <IconCheckShield size={12} />
-          Secured by the Stellar network
+          {t('securedCaption')}
         </div>
 
         <h1 className="sn-gate-heading" style={{ marginTop: 28 }}>
-          Connect your wallet
+          {t('connectHeading')}
         </h1>
-        <p className="sn-gate-subtext">
-          Sign in with Freighter or any supported Stellar wallet to view your balance and
-          support this campaign on Stellar Testnet.
-        </p>
+        <p className="sn-gate-subtext">{t('connectSubtext')}</p>
 
         <button className="sn-btn sn-btn--primary sn-btn--block sn-btn--iconed" onClick={onConnect} disabled={connecting}>
           <IconLock size={15} />
-          {connecting ? 'Connecting…' : 'Connect wallet'}
+          {connecting ? t('connectingButton') : t('connectButton')}
         </button>
 
         {errorMessage && <div className="sn-gate-error">{errorMessage}</div>}
 
         <div className="sn-wallet-badges">
-          <span className="sn-wallet-badges-label">Works with</span>
+          <span className="sn-wallet-badges-label">{t('worksWith')}</span>
           <div className="sn-wallet-badges-row">
             {WALLET_BADGES.map((w) => (
               <span key={w.label} className={`sn-wallet-badge sn-wallet-badge--${w.hue}`} title={w.label}>
@@ -160,10 +162,7 @@ export default function ConnectGate({ connecting, errorMessage, onConnect }: Pro
           </div>
         </div>
 
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 22, lineHeight: 1.6 }}>
-          Sentinel never asks for a seed phrase or private key. Your wallet extension signs
-          every transaction locally — this app only ever sees the signed result.
-        </p>
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 22, lineHeight: 1.6 }}>{t('finePrint')}</p>
       </div>
 
       <div className={`sn-gate-right ${connecting ? 'sn-gate-connecting' : ''}`}>
@@ -178,11 +177,10 @@ export default function ConnectGate({ connecting, errorMessage, onConnect }: Pro
         </div>
 
         <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.01em', margin: '0 0 10px', textAlign: 'center' }}>
-          Security, verified on-chain.
+          {t('securityHeading')}
         </h2>
         <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', textAlign: 'center', maxWidth: 360, lineHeight: 1.6, margin: '0 0 32px' }}>
-          Sentinel never holds your funds or your keys. Every deposit, claim, and refund is
-          signed in your own wallet and settled directly on the Stellar network.
+          {t('securitySubtext')}
         </p>
 
         <ul className="sn-feature-list">
@@ -191,8 +189,8 @@ export default function ConnectGate({ connecting, errorMessage, onConnect }: Pro
               <IconLock size={16} />
             </div>
             <div>
-              <p className="sn-feature-title">Non-custodial by design</p>
-              <p className="sn-feature-body">Sentinel can&apos;t move your funds. Only you can sign a transaction.</p>
+              <p className="sn-feature-title">{t('featureNonCustodialTitle')}</p>
+              <p className="sn-feature-body">{t('featureNonCustodialBody')}</p>
             </div>
           </li>
           <li className="sn-feature-item">
@@ -200,8 +198,8 @@ export default function ConnectGate({ connecting, errorMessage, onConnect }: Pro
               <IconCheckShield size={16} />
             </div>
             <div>
-              <p className="sn-feature-title">Publicly verifiable</p>
-              <p className="sn-feature-body">Every transaction is recorded on Stellar and open to audit.</p>
+              <p className="sn-feature-title">{t('featureVerifiableTitle')}</p>
+              <p className="sn-feature-body">{t('featureVerifiableBody')}</p>
             </div>
           </li>
           <li className="sn-feature-item">
@@ -209,11 +207,12 @@ export default function ConnectGate({ connecting, errorMessage, onConnect }: Pro
               <IconActivity size={16} />
             </div>
             <div>
-              <p className="sn-feature-title">Real-time monitoring</p>
-              <p className="sn-feature-body">Campaign state and activity update live from the chain.</p>
+              <p className="sn-feature-title">{t('featureMonitoringTitle')}</p>
+              <p className="sn-feature-body">{t('featureMonitoringBody')}</p>
             </div>
           </li>
         </ul>
+      </div>
       </div>
     </div>
   );

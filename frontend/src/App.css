@@ -150,9 +150,16 @@
 }
 
 /* ---------- dashboard shell: sidebar + main ---------- */
+.sn-dash-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 .sn-dash {
   display: flex;
-  min-height: 100vh;
+  flex: 1;
+  min-height: calc(100vh - 56px);
 }
 
 .sn-side {
@@ -163,7 +170,7 @@
   padding: 24px 20px;
   border-right: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.012);
-  max-height: 100vh;
+  max-height: calc(100vh - 56px);
   overflow-y: auto;
 }
 
@@ -421,8 +428,16 @@
 /* ==================================================================
    Connect gate — split-screen wallet connect landing
    ================================================================== */
-.sn-gate {
+.sn-gate-page {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sn-gate {
+  position: relative;
+  min-height: calc(100vh - 56px);
+  flex: 1;
   display: grid;
   grid-template-columns: 440px 1fr;
 }

@@ -1,23 +1,28 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type FormEvent } from 'react';
 import './WatchApp.css';
 import { kit, getAvailableWallets, classifyError } from '../lib/wallet';
 import { CONTRACT_ID } from '../lib/contract';
 import { fetchWatchEvents, getLatestLedger } from './lib/sorobanWatch';
 import { evaluateNewEvent, type AlertRule, type FiredAlert } from './lib/alertRules';
-import { shortId } from './lib/format';
 import type { WatchEvent } from './types';
 import EventFeedPanel from './components/EventFeedPanel';
 import AnalyticsPanel from './components/AnalyticsPanel';
 import AlertsPanel from './components/AlertsPanel';
 import SimulatorPanel from './components/SimulatorPanel';
+import ProfileMenu from '../ProfileMenu';
+import FeedbackButton from '../FeedbackButton';
+import TopNav from '../TopNav';
+import { useLanguage, translateAppError } from '../i18n/useLanguage';
+import type { TranslationKey } from '../i18n/translations';
+import { IconAlert, IconBarChart, IconFlask, IconRadar } from '../icons';
 
 type Tab = 'feed' | 'analytics' | 'alerts' | 'simulator';
 
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: 'feed', label: 'Event Feed', icon: '📡' },
-  { id: 'analytics', label: 'Analytics', icon: '📊' },
-  { id: 'alerts', label: 'Alerts', icon: '🚨' },
-  { id: 'simulator', label: 'Simulator', icon: '🧪' },
+const TABS: { id: Tab; labelKey: TranslationKey; icon: ComponentType<{ size?: number }> }[] = [
+  { id: 'feed', labelKey: 'watchTabFeed', icon: IconRadar },
+  { id: 'analytics', labelKey: 'watchTabAnalytics', icon: IconBarChart },
+  { id: 'alerts', labelKey: 'watchTabAlerts', icon: IconAlert },
+  { id: 'simulator', labelKey: 'watchTabSimulator', icon: IconFlask },
 ];
 
 // A lookback window that stays comfortably inside testnet's event retention.
@@ -61,6 +66,7 @@ function notifyBrowser(alerts: FiredAlert[]) {
 }
 
 export default function WatchApp() {
+  const { t } = useLanguage();
   const [contractIdInput, setContractIdInput] = useState(CONTRACT_ID ?? '');
   const [activeContractId, setActiveContractId] = useState(CONTRACT_ID ?? '');
   const [activeTab, setActiveTab] = useState<Tab>('feed');
@@ -167,7 +173,7 @@ export default function WatchApp() {
     try {
       const available = await getAvailableWallets();
       if (available.length === 0) {
-        setWalletMessage(classifyError('no wallet found').message);
+        setWalletMessage(translateAppError(t, classifyError('no wallet found')));
         return;
       }
       await kit.openModal({
@@ -178,12 +184,12 @@ export default function WatchApp() {
             setPubKey(address);
             setWalletMessage('');
           } catch (e) {
-            setWalletMessage(classifyError(e).message);
+            setWalletMessage(translateAppError(t, classifyError(e)));
           }
         },
       });
     } catch (e) {
-      setWalletMessage(classifyError(e).message);
+      setWalletMessage(translateAppError(t, classifyError(e)));
     } finally {
       setConnecting(false);
     }
@@ -213,27 +219,21 @@ export default function WatchApp() {
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r)));
   const deleteRule = (id: string) => setRules((prev) => prev.filter((r) => r.id !== id));
 
-  const statusText = pollError ? 'RPC error' : activeContractId ? 'live' : 'idle';
+  const statusText = pollError ? t('watchRpcError') : activeContractId ? t('watchLive') : t('watchIdle');
 
   return (
     <div className="watch-app">
-      <header className="watch-topbar">
-        <a href="#/" className="watch-brand" aria-label="Back to Sentinel">
-          <span className="watch-logo">🛰️</span>
-          <span>
-            SENTINEL <span className="watch-brand-accent">WATCH</span>
-          </span>
-        </a>
-
+      <TopNav active="watch" />
+      <header className="watch-subbar">
         <form className="watch-contract-form" onSubmit={submitContract}>
           <input
             className="watch-mono-input"
             value={contractIdInput}
             onChange={(e) => setContractIdInput(e.target.value)}
-            placeholder="Soroban Contract ID (C...)"
+            placeholder={t('watchContractPlaceholder')}
           />
           <button type="submit" className="watch-btn watch-btn--primary">
-            Watch
+            {t('watchAction')}
           </button>
         </form>
 
@@ -246,15 +246,10 @@ export default function WatchApp() {
 
         <div className="watch-wallet">
           {pubKey ? (
-            <>
-              <span className="watch-mono">{shortId(pubKey)}</span>
-              <button className="watch-btn watch-btn--ghost" onClick={disconnectWallet}>
-                Disconnect
-              </button>
-            </>
+            <ProfileMenu pubKey={pubKey} onDisconnect={disconnectWallet} align="right" />
           ) : (
             <button className="watch-btn watch-btn--ghost" onClick={connectWallet} disabled={connecting}>
-              {connecting ? 'Connecting…' : 'Connect Wallet'}
+              {connecting ? t('connectingButton') : t('watchConnectWallet')}
             </button>
           )}
         </div>
@@ -264,16 +259,24 @@ export default function WatchApp() {
 
       <div className="watch-body">
         <nav className="watch-sidebar">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={`watch-nav-btn ${activeTab === tab.id ? 'watch-nav-btn--active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span className="watch-nav-icon">{tab.icon}</span>
-              <span>{tab.label}</span>
-            </button>
-          ))}
+          {TABS.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                className={`watch-nav-btn ${activeTab === tab.id ? 'watch-nav-btn--active' : ''}`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                <span className="watch-nav-icon">
+                  <Icon size={15} />
+                </span>
+                <span>{t(tab.labelKey)}</span>
+              </button>
+            );
+          })}
+          <div style={{ marginTop: 'auto', paddingTop: 12 }}>
+            <FeedbackButton align="left" />
+          </div>
         </nav>
 
         <main className="watch-main">
@@ -281,8 +284,7 @@ export default function WatchApp() {
             <SimulatorPanel defaultContractId={activeContractId} defaultSourceAddress={pubKey ?? ''} />
           ) : !activeContractId ? (
             <div className="watch-empty watch-empty--hero">
-              Enter a Soroban Contract ID above and hit <strong>Watch</strong> to start monitoring —
-              live events, analytics and alert rules, all against real testnet data.
+              {t('watchHeroEmpty', { watchAction: t('watchAction') })}
             </div>
           ) : (
             <>
@@ -309,10 +311,12 @@ export default function WatchApp() {
       </div>
 
       <div className="watch-toast-stack">
-        {toasts.map((t, i) => (
-          <div className="watch-toast" key={`${t.ruleId}-${t.at}-${i}`}>
-            <div className="watch-toast-title">🚨 {t.label}</div>
-            <div className="watch-toast-msg">{t.message}</div>
+        {toasts.map((toast, i) => (
+          <div className="watch-toast" key={`${toast.ruleId}-${toast.at}-${i}`}>
+            <div className="watch-toast-title">
+              <IconAlert size={13} /> {toast.label}
+            </div>
+            <div className="watch-toast-msg">{toast.message}</div>
           </div>
         ))}
       </div>
