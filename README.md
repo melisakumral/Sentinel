@@ -192,6 +192,45 @@ checkbox just shows a clear error if unconfigured):
 3. Keep the sponsor account funded — each sponsored transaction costs it up to `SPONSOR_FEE` (0.1 XLM, see `frontend/api/sponsor-fee-bump.ts`).
 4. Redeploy. The "Gasless (sponsored fee)" checkbox in the donation panel will start working; `VITE_CONTRACT_ID` is reused server-side to scope which contract can be sponsored.
 
+## 🚀 Level 7 Requirements — Coverage
+
+> Founder Belt is explicitly about running this as a real, ongoing product —
+> growth, retention, and community, not a one-time submission. The items
+> below that need real users, followers, or social posts genuinely can't be
+> produced by an assistant; they're listed so the gap is honest and
+> trackable, not skipped.
+
+| Requirement | Status |
+|-----------|-------|
+| Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
+| 30+ meaningful commits | ⬜ 22 as of this update — see git history; grows with every real iteration |
+| Live production app | ⬜ Manual — see [Remaining Manual Steps](#-remaining-manual-steps); `vercel.json` + docs are ready |
+| Proof of 50+ new mainnet users | ⬜ Manual — needs a mainnet deployment first (Level 6) |
+| Mainnet transaction proof | ⬜ Manual — Activity feed / Sentinel Watch already surface it live once it exists |
+| User feedback form | ✅ in-app [`FeedbackButton`](frontend/src/FeedbackButton.tsx) (Level 4) + the Google Form from Level 5/6 (once created) — both funnel into the same feedback loop |
+| Product development commitment links | ⬜ Manual — link real commits against real feedback as they land (see the roadmap table below) |
+| Monthly growth report | ⬜ Manual — template started below |
+| Social growth proof (50+ followers) | ⬜ Manual |
+| Product update posts | ⬜ Manual |
+| Community contribution proof | ⬜ Manual — carried over from Level 6 |
+| Updated documentation | ✅ this README, kept current every level |
+
+### Monthly growth report (template)
+
+Fill in once real usage exists — this is the running record the level asks for:
+
+| Month | New users | Transactions | Notes |
+|---|---|---|---|
+| `(e.g. 2026-08)` | `(add)` | `(add)` | `(add)` |
+
+### Product commitments (feedback → shipped)
+
+Extends the [Level 5 roadmap table](#planned-next-iteration-roadmap-from-user-feedback) with links once real feedback drives a change:
+
+| Feedback / request | Change | Commit |
+|---|---|---|
+| `(add as real feedback comes in)` | | |
+
 ## 🛰️ Sentinel Watch — Soroban Monitoring, Alerts & Simulator
 
 Alongside the crowdfunding app, `frontend/src/watch/` is a second, self-contained
@@ -282,6 +321,10 @@ The following couldn't be automated because they require a browser, an account l
 18. **Twitter/X launch post (Level 6)** — draft, then post from the project's own account, and link it in the checklist.
 19. **Ecosystem contribution (Level 6)** — pick one: technical blog post, workshop, educational video, OSS contribution, or community session; link it once published.
 20. **Reuse the Google Form for Level 6** — the same form/Excel export from Level 5 already collects wallet address, email, name, and feedback; keep it running and re-export as mainnet users join.
+21. **Onboard 50+ new mainnet users (Level 7)** — same on-chain proof mechanism, now with a retention/growth lens rather than a one-time count.
+22. **Monthly growth report (Level 7)** — fill in the [Monthly growth report](#monthly-growth-report-template) table above once real usage data exists.
+23. **Grow social following to 50+ (Level 7)** and **post product updates** — pick one channel (Twitter/X is the one already referenced in Level 6) and post consistently; link posts in the checklist.
+24. **Community contribution (Level 7)** — same options as Level 6 (blog/workshop/video/OSS/community session); can reuse the Level 6 one if still relevant, or do a fresh one for this level.
 
 ## 🗂️ Project Structure
 
