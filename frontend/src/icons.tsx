@@ -136,3 +136,31 @@ export function IconLogout(props: IconProps) {
     </svg>
   );
 }
+
+export function IconBarChart(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 20V10" />
+      <path d="M12 20V4" />
+      <path d="M20 20v-7" />
+    </svg>
+  );
+}
+
+export function IconFlask(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M9 3h6" />
+      <path d="M10 3v6l-5.5 9.5A1.5 1.5 0 0 0 5.8 21h12.4a1.5 1.5 0 0 0 1.3-2.5L14 9V3" />
+      <path d="M7.5 15h9" />
+    </svg>
+  );
+}
+
+export function IconMessage(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 5h16v11H8l-4 4V5z" />
+    </svg>
+  );
+}
