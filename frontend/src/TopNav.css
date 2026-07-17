@@ -1,0 +1,122 @@
+/* Hardcoded to the shared Stellar Blue palette (same reasoning as
+   ProfileMenu.css / FeedbackButton.css) so it renders identically whether
+   mounted inside .sentinel-app or .watch-app. Fixed height (56px) so both
+   scopes can reserve exact space for it via calc(100vh - 56px). */
+
+.tn-root {
+  height: 56px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  border-bottom: 1px solid #27272a;
+  background: rgba(9, 9, 11, 0.75);
+  backdrop-filter: blur(6px);
+  font-family: 'Inter', system-ui, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+}
+
+.tn-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #f4f4f5;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+.tn-brand-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: #17171a;
+  border: 1px solid #3a3a3f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.tn-brand-name {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.tn-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.tn-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #a1a1aa;
+  text-decoration: none;
+  padding: 7px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.tn-link:hover {
+  color: #f4f4f5;
+  background: rgba(255, 255, 255, 0.05);
+}
+.tn-link--active {
+  color: #f4f4f5;
+  background: rgba(59, 130, 246, 0.14);
+}
+
+.tn-spacer {
+  flex: 1;
+}
+
+.tn-lang {
+  display: flex;
+  border: 1px solid #27272a;
+  border-radius: 20px;
+  padding: 2px;
+  flex-shrink: 0;
+}
+.tn-lang-btn {
+  background: transparent;
+  border: none;
+  color: #71717a;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 5px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.tn-lang-btn:hover {
+  color: #f4f4f5;
+}
+.tn-lang-btn--active {
+  background: #3b82f6;
+  color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .tn-root {
+    padding: 0 14px;
+    gap: 6px;
+  }
+  .tn-brand-name {
+    display: none;
+  }
+  .tn-brand {
+    margin-right: 4px;
+  }
+  .tn-link {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+}
