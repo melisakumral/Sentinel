@@ -99,12 +99,13 @@ export async function getCampaign(sourceAddress: string): Promise<Campaign> {
   };
 }
 
-// --- Generic write: prepare + sign + submit + await confirmation ---
-async function invoke(
-  sourceAddress: string,
-  fn: string,
-  args: any[] = [],
-): Promise<{ hash: string; returnValue: any }> {
+// --- Write path, split so the sponsored (fee-bump) flow can reuse the same
+// build + prepare + wallet-sign step and only diverge at submission. ---
+
+// Builds, prepares (Soroban footprint/auth/resource-fee), and signs the
+// invocation with the connected wallet. Returns the signed XDR — nothing is
+// submitted yet.
+async function signInvocation(sourceAddress: string, fn: string, args: any[] = []): Promise<string> {
   const id = requireContractId();
   const account = await server.getAccount(sourceAddress);
   const contract = new Contract(id);
@@ -124,7 +125,12 @@ async function invoke(
     address: sourceAddress,
     networkPassphrase: WalletNetwork.TESTNET,
   });
+  return signedTxXdr;
+}
 
+// Submits an already-signed transaction (as its own fee-paying transaction —
+// not a fee-bump) and awaits confirmation.
+async function submitSigned(signedTxXdr: string): Promise<{ hash: string; returnValue: any }> {
   const signed = TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE);
   const sent = await server.sendTransaction(signed);
 
@@ -145,17 +151,58 @@ async function invoke(
   return { hash: sent.hash, returnValue };
 }
 
+// --- Generic write: prepare + sign + submit + await confirmation ---
+async function invoke(
+  sourceAddress: string,
+  fn: string,
+  args: any[] = [],
+): Promise<{ hash: string; returnValue: any }> {
+  const signedTxXdr = await signInvocation(sourceAddress, fn, args);
+  return submitSigned(signedTxXdr);
+}
+
+// Black Belt "Fee Sponsorship": the user signs the same inner transaction as
+// `invoke()`, but instead of paying its own fee, the signed XDR is handed to
+// a server-side sponsor (see api/sponsor-fee-bump.ts) that wraps it in a
+// CAP-15 fee-bump transaction and pays the network fee on the user's behalf.
+async function invokeSponsored(sourceAddress: string, fn: string, args: any[] = []): Promise<{ hash: string }> {
+  const signedTxXdr = await signInvocation(sourceAddress, fn, args);
+
+  const res = await fetch('/api/sponsor-fee-bump', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ signedTxXdr }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error ?? `Sponsored transaction failed (${res.status})`);
+  }
+  return { hash: data.hash };
+}
+
 // --- Write functions ---
 export function deposit(donor: string, amountStroops: bigint) {
   return invoke(donor, 'deposit', [addr(donor), i128(amountStroops)]);
+}
+
+export function depositSponsored(donor: string, amountStroops: bigint) {
+  return invokeSponsored(donor, 'deposit', [addr(donor), i128(amountStroops)]);
 }
 
 export function claim(recipient: string) {
   return invoke(recipient, 'claim');
 }
 
+export function claimSponsored(recipient: string) {
+  return invokeSponsored(recipient, 'claim');
+}
+
 export function refund(donor: string) {
   return invoke(donor, 'refund', [addr(donor)]);
+}
+
+export function refundSponsored(donor: string) {
+  return invokeSponsored(donor, 'refund', [addr(donor)]);
 }
 
 // --- Real-time event streaming ---
