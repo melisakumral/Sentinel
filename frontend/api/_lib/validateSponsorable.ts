@@ -5,7 +5,17 @@ import { Address, Transaction, TransactionBuilder } from 'stellar-sdk';
 
 export const ALLOWED_FUNCTIONS = new Set(['deposit', 'claim', 'refund']);
 
-export type ValidationResult = { ok: true; tx: Transaction } | { ok: false; status: number; error: string };
+export type ValidationOk = { ok: true; tx: Transaction };
+export type ValidationFail = { ok: false; status: number; error: string };
+export type ValidationResult = ValidationOk | ValidationFail;
+
+// An explicit type predicate narrows more reliably than inline `!result.ok`
+// control-flow analysis across every TS module-resolution mode the
+// consuming build might use (Vite's bundler resolution locally vs.
+// Vercel's node16/nodenext resolution for the serverless function).
+export function isValidationFail(result: ValidationResult): result is ValidationFail {
+  return result.ok === false;
+}
 
 export function validateSponsorable(signedTxXdr: string, contractId: string, networkPassphrase: string): ValidationResult {
   let parsed;

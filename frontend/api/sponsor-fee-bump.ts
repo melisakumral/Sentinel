@@ -16,7 +16,7 @@
 // function — otherwise anyone could point this endpoint at an unrelated
 // transaction and drain the sponsor account for free.
 import { Keypair, Networks, TransactionBuilder, rpc } from 'stellar-sdk';
-import { validateSponsorable } from './_lib/validateSponsorable';
+import { validateSponsorable, isValidationFail } from './_lib/validateSponsorable.js';
 
 // Minimal structural types for the Vercel Node request/response — avoids
 // pulling in @vercel/node (which drags in a large, vulnerability-heavy
@@ -59,7 +59,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const validation = validateSponsorable(body.signedTxXdr, contractId, NETWORK_PASSPHRASE);
-  if (!validation.ok) {
+  if (isValidationFail(validation)) {
     res.status(validation.status).json({ error: validation.error });
     return;
   }
