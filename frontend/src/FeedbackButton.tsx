@@ -9,6 +9,10 @@ const PANEL_WIDTH = 280;
 
 interface Props {
   align?: 'left' | 'right';
+  /** 'up' opens the panel above the trigger instead of below — needed when
+   * the trigger sits near the bottom of the viewport (the fixed corner FAB),
+   * where opening downward pushes the panel off-screen entirely. */
+  placement?: 'down' | 'up';
 }
 
 // Zero-account feedback collection (Level 4: "temel kullanıcı geri
@@ -16,11 +20,11 @@ interface Props {
 // the project's already-public repo — no third-party form service, no new
 // account for us to create, and the result is a real, persistent, publicly
 // verifiable feedback record instead of an opaque inbox.
-export default function FeedbackButton({ align = 'left' }: Props) {
+export default function FeedbackButton({ align = 'left', placement = 'down' }: Props) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState('');
-  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top?: number; bottom?: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -30,8 +34,14 @@ export default function FeedbackButton({ align = 'left' }: Props) {
     if (!rect) return;
     const rawLeft = align === 'right' ? rect.right - PANEL_WIDTH : rect.left;
     const left = Math.min(Math.max(8, rawLeft), window.innerWidth - PANEL_WIDTH - 8);
-    setPanelPos({ top: rect.bottom + 8, left });
-  }, [open, align]);
+    if (placement === 'up') {
+      // Anchored from the viewport bottom so the panel grows upward,
+      // regardless of how tall its content ends up being.
+      setPanelPos({ bottom: window.innerHeight - rect.top + 8, left });
+    } else {
+      setPanelPos({ top: rect.bottom + 8, left });
+    }
+  }, [open, align, placement]);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -74,7 +84,11 @@ export default function FeedbackButton({ align = 'left' }: Props) {
       {open &&
         panelPos &&
         createPortal(
-          <div ref={panelRef} className="fb-panel" style={{ position: 'fixed', top: panelPos.top, left: panelPos.left }}>
+          <div
+            ref={panelRef}
+            className="fb-panel"
+            style={{ position: 'fixed', top: panelPos.top, bottom: panelPos.bottom, left: panelPos.left }}
+          >
             <div className="fb-panel-title">{t('fbTitle')}</div>
             <p className="fb-panel-hint">{t('fbHint')}</p>
             <textarea

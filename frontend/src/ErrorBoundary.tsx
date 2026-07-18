@@ -60,21 +60,21 @@ export default class ErrorBoundary extends Component<Props, State> {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#09090b',
-          color: '#f4f4f5',
+          background: '#0a0b10',
+          color: '#eef2fb',
           fontFamily: "'Inter', system-ui, sans-serif",
           padding: 24,
         }}
       >
         <div style={{ maxWidth: 420, textAlign: 'center' }}>
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px' }}>{t('ebTitle')}</h1>
-          <p style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.6, margin: '0 0 20px' }}>{t('ebBody')}</p>
+          <p style={{ fontSize: 13, color: '#9aa3b8', lineHeight: 1.6, margin: '0 0 20px' }}>{t('ebBody')}</p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
             <button
               onClick={() => window.location.reload()}
               style={{
-                background: '#3b82f6',
-                color: '#ffffff',
+                background: '#00e5ff',
+                color: '#04141a',
                 border: 'none',
                 borderRadius: 8,
                 padding: '10px 18px',
@@ -91,8 +91,8 @@ export default class ErrorBoundary extends Component<Props, State> {
               target="_blank"
               rel="noreferrer"
               style={{
-                border: '1px solid #27272a',
-                color: '#a1a1aa',
+                border: '1px solid #1d2233',
+                color: '#9aa3b8',
                 borderRadius: 8,
                 padding: '10px 18px',
                 fontSize: 13,

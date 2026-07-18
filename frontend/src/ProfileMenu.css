@@ -1,4 +1,4 @@
-/* Hardcoded to the shared Stellar Blue palette (same hex values as App.css
+/* Hardcoded to the shared Neon Cyber palette (same hex values as App.css
    and WatchApp.css) rather than scoped CSS vars, so this one component
    drops cleanly into either .sentinel-app or .watch-app without caring
    which var names its parent defines. */
@@ -12,7 +12,7 @@
   align-items: center;
   gap: 8px;
   background: transparent;
-  border: 1px solid #27272a;
+  border: 1px solid #1d2233;
   border-radius: 20px;
   padding: 4px 12px 4px 4px;
   cursor: pointer;
@@ -21,14 +21,14 @@
   width: 100%;
 }
 .pm-trigger:hover {
-  border-color: #3a3a3f;
+  border-color: #2b3145;
 }
 
 .pm-avatar {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  background: linear-gradient(135deg, #00e5ff, #2962ff);
   color: #ffffff;
   font-size: 10px;
   font-weight: 700;
@@ -46,15 +46,15 @@
 .pm-trigger-address {
   font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
   font-size: 12px;
-  color: #f4f4f5;
+  color: #eef2fb;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .pm-panel {
   width: 260px;
-  background: #121214;
-  border: 1px solid #27272a;
+  background: #10121b;
+  border: 1px solid #1d2233;
   border-radius: 12px;
   padding: 16px;
   z-index: 60;
@@ -78,20 +78,20 @@
   gap: 10px;
   margin-bottom: 14px;
   padding-bottom: 14px;
-  border-bottom: 1px solid #27272a;
+  border-bottom: 1px solid #1d2233;
 }
 .pm-panel-address {
   font-family: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
   font-size: 13px;
-  color: #f4f4f5;
+  color: #eef2fb;
 }
 .pm-owner-tag {
   display: inline-block;
   margin-top: 4px;
   font-size: 10px;
   font-weight: 600;
-  color: #3b82f6;
-  background: rgba(59, 130, 246, 0.1);
+  color: #00e5ff;
+  background: rgba(0, 229, 255, 0.1);
   padding: 2px 8px;
   border-radius: 20px;
   text-transform: uppercase;
@@ -106,10 +106,10 @@
   font-family: 'Inter', system-ui, sans-serif;
 }
 .pm-row-label {
-  color: #71717a;
+  color: #6b7386;
 }
 .pm-row-value {
-  color: #f4f4f5;
+  color: #eef2fb;
 }
 
 .pm-actions {
@@ -123,8 +123,8 @@
   text-align: left;
   width: 100%;
   background: transparent;
-  border: 1px solid #27272a;
-  color: #a1a1aa;
+  border: 1px solid #1d2233;
+  color: #9aa3b8;
   font-size: 12px;
   font-family: 'Inter', system-ui, sans-serif;
   padding: 8px 10px;
@@ -135,8 +135,8 @@
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 .pm-action-btn:hover {
-  border-color: #3a3a3f;
-  color: #f4f4f5;
+  border-color: #2b3145;
+  color: #eef2fb;
 }
 
 .pm-disconnect {
@@ -145,8 +145,8 @@
   gap: 8px;
   width: 100%;
   background: transparent;
-  border: 1px solid #f87171;
-  color: #f87171;
+  border: 1px solid #ff4d4d;
+  color: #ff4d4d;
   font-size: 12px;
   font-weight: 600;
   font-family: 'Inter', system-ui, sans-serif;
@@ -158,6 +158,6 @@
   transition: background-color 0.15s ease;
 }
 .pm-disconnect:hover {
-  background: rgba(248, 113, 113, 0.1);
+  background: rgba(255, 77, 77, 0.1);
 }
 

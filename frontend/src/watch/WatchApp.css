@@ -1,19 +1,19 @@
-/* Sentinel Watch — shares the same "Stellar Blue" enterprise theme as the
+/* Sentinel Watch — shares the same "Neon Cyber" enterprise theme as the
    crowdfunding app and connect gate (see App.css) so the whole product reads
    as one system. Scoped entirely under .watch-app to avoid leaking styles. */
 
 .watch-app {
-  --watch-bg: #09090b;
+  --watch-bg: #0a0b10;
   --watch-bg-alt: #0d0d10;
-  --watch-panel: #121214;
-  --watch-panel-alt: #17171a;
-  --watch-border: #27272a;
-  --watch-accent: #3b82f6;
-  --watch-accent-2: #6366f1;
-  --watch-danger: #f87171;
-  --watch-success: #34d399;
-  --watch-text: #f4f4f5;
-  --watch-text-dim: #a1a1aa;
+  --watch-panel: #10121b;
+  --watch-panel-alt: #151827;
+  --watch-border: #1d2233;
+  --watch-accent: #00e5ff;
+  --watch-accent-2: #2962ff;
+  --watch-danger: #ff4d4d;
+  --watch-success: #00ff9c;
+  --watch-text: #eef2fb;
+  --watch-text-dim: #9aa3b8;
   --watch-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
   min-height: 100vh;
@@ -22,8 +22,8 @@
   color: var(--watch-text);
   background-color: var(--watch-bg);
   background-image:
-    radial-gradient(circle at 8% -10%, rgba(59, 130, 246, 0.14), transparent 40%),
-    radial-gradient(circle at 92% 10%, rgba(99, 102, 241, 0.1), transparent 40%),
+    radial-gradient(circle at 8% -10%, rgba(0, 229, 255, 0.14), transparent 40%),
+    radial-gradient(circle at 92% 10%, rgba(41, 98, 255, 0.1), transparent 40%),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 1px, transparent 1px, transparent 32px);
   font-family: 'Inter', system-ui, 'Segoe UI', sans-serif;
 }
@@ -80,14 +80,14 @@
   animation: watch-pulse-error 1.6s infinite;
 }
 @keyframes watch-pulse-live {
-  0% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.55); }
-  70% { box-shadow: 0 0 0 8px rgba(52, 211, 153, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(52, 211, 153, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(0, 255, 156, 0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(0, 255, 156, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 255, 156, 0); }
 }
 @keyframes watch-pulse-error {
-  0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.55); }
-  70% { box-shadow: 0 0 0 8px rgba(248, 113, 113, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+  0% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(255, 77, 77, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 77, 77, 0); }
 }
 
 .watch-wallet {
@@ -200,49 +200,105 @@
   border-top: 1px solid var(--watch-border);
 }
 
-/* ---------- feed table ---------- */
-.watch-table-wrap {
+/* ---------- feed terminal ---------- */
+.watch-terminal {
+  background: var(--watch-bg);
+  border: 1px solid var(--watch-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  max-height: 460px;
+  overflow-y: auto;
   overflow-x: auto;
+  font-family: var(--watch-mono);
+  font-size: 12.5px;
+  display: flex;
+  flex-direction: column;
 }
-.watch-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.watch-table th {
-  text-align: left;
-  color: var(--watch-text-dim);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--watch-border);
-}
-.watch-table td {
-  padding: 10px 10px 10px 0;
-  border-bottom: 1px solid rgba(38, 42, 54, 0.6);
+.watch-term-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 5px 0;
   white-space: nowrap;
+  border-bottom: 1px solid rgba(29, 34, 51, 0.6);
+  animation: watch-term-in 0.35s ease-out;
 }
-.watch-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+.watch-term-line:first-child {
+  border-bottom: none;
 }
-
-.watch-kind-badge {
+@keyframes watch-term-in {
+  from {
+    opacity: 0;
+    text-shadow: 0 0 12px currentColor;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    text-shadow: none;
+    transform: translateY(0);
+  }
+}
+.watch-term-prompt {
+  color: var(--watch-accent);
   font-weight: 700;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.4px;
-  padding: 3px 9px;
-  border-radius: 20px;
-  border: 1px solid currentColor;
+  flex-shrink: 0;
 }
-
-.watch-link {
+.watch-term-kind {
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+  min-width: 64px;
+}
+.watch-term-actor {
+  color: var(--watch-text-dim);
+  flex-shrink: 0;
+}
+.watch-term-value {
+  color: var(--watch-text);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.watch-term-ledger,
+.watch-term-time {
+  color: var(--watch-text-dim);
+  font-size: 11.5px;
+  flex-shrink: 0;
+}
+.watch-term-tx {
   color: var(--watch-accent-2);
   text-decoration: none;
+  margin-left: auto;
+  flex-shrink: 0;
 }
-.watch-link:hover {
+.watch-term-tx:hover {
   text-decoration: underline;
+}
+.watch-term-cursor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0 9px;
+  border-bottom: 1px solid rgba(29, 34, 51, 0.6);
+  margin-bottom: 4px;
+}
+.watch-term-cursor-block {
+  width: 7px;
+  height: 13px;
+  background: var(--watch-accent);
+  animation: watch-cursor-blink 1s step-start infinite;
+}
+@keyframes watch-cursor-blink {
+  50% {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .watch-term-line {
+    animation: none;
+  }
+  .watch-term-cursor-block {
+    animation: none;
+  }
 }
 
 /* ---------- analytics ---------- */
@@ -526,7 +582,7 @@
 }
 .watch-tag {
   font-size: 10px;
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(0, 229, 255, 0.12);
   border: 1px solid var(--watch-accent);
   color: var(--watch-accent);
   padding: 3px 9px;
@@ -578,7 +634,7 @@
 }
 .watch-btn--primary {
   background: var(--watch-accent);
-  color: #ffffff;
+  color: #04141a;
 }
 .watch-btn--primary:hover:not(:disabled) {
   filter: brightness(1.1);
@@ -599,7 +655,7 @@
   color: var(--watch-danger);
 }
 .watch-btn--danger:hover:not(:disabled) {
-  background: rgba(248, 113, 113, 0.1);
+  background: rgba(255, 77, 77, 0.1);
 }
 .watch-btn:disabled {
   opacity: 0.5;
@@ -615,13 +671,13 @@
   padding: 12px 14px;
   border-radius: 10px;
   font-size: 12.5px;
-  background: rgba(59, 130, 246, 0.07);
+  background: rgba(0, 229, 255, 0.07);
   border: 1px solid var(--watch-border);
   color: var(--watch-text-dim);
   margin-bottom: 16px;
 }
 .watch-banner--error {
-  background: rgba(248, 113, 113, 0.08);
+  background: rgba(255, 77, 77, 0.08);
   border-color: var(--watch-danger);
   color: var(--watch-danger);
 }
@@ -738,5 +794,15 @@
     left: 16px;
     right: 16px;
     max-width: none;
+  }
+}
+
+/* Room for TopNav's fixed bottom tab bar (see TopNav.css). */
+@media (max-width: 640px) {
+  .watch-main {
+    padding-bottom: 84px;
+  }
+  .watch-toast-stack {
+    bottom: 74px;
   }
 }

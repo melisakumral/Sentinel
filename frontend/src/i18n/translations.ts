@@ -137,6 +137,47 @@ const en = {
   gaslessLabel: 'Gasless (sponsored fee)',
   gaslessHint: 'The network fee is covered for you — no XLM needed just to cover it.',
   gaslessUnavailable: 'Gasless sponsorship is not available on this deployment.',
+
+  navExplore: 'Explore',
+  navProfile: 'Profile',
+
+  exploreTitle: 'Explore campaigns',
+  exploreSubtitle: 'Live, on-chain crowdfunding campaigns running on Sentinel.',
+  exploreSearchPlaceholder: 'Search campaigns…',
+  exploreFilterAll: 'All',
+  exploreFilterActive: 'Active',
+  exploreFilterCompleted: 'Completed',
+  exploreConnectPrompt: 'Connect a wallet to load live funding data for every campaign below.',
+  exploreConnectButton: 'Connect wallet',
+  exploreEmpty: 'No campaigns match your search.',
+  exploreLoading: 'Loading campaigns…',
+  exploreRaisedOf: '{a} / {b} XLM',
+  exploreTimeLeft: 'Time left',
+  exploreSupportButton: 'Support',
+  exploreViewButton: 'View on explorer',
+  badgeUnavailable: 'DATA UNAVAILABLE',
+
+  profileTitle: 'Profile',
+  profileSubtitle: 'Your wallet activity and personal alert settings for this campaign.',
+  profileTabHistory: 'History',
+  profileTabAlerts: 'Alerts',
+  profileConnectPrompt: 'Connect your wallet to see your activity and alert settings.',
+
+  profileHistoryHeading: 'Your activity',
+  profileHistoryEmpty: 'No deposits, claims, or refunds from your wallet yet on this campaign.',
+
+  profileAlertsHeading: 'Webhook alerts',
+  profileAlertsHint:
+    'Get notified the moment your wallet\'s deposit, claim, or refund confirms on-chain. Paste any webhook URL that accepts a POST with a JSON body — for example a Telegram bot\'s sendMessage endpoint (https://api.telegram.org/bot<token>/sendMessage) with your chat_id, or a Discord/Slack incoming webhook. The URL is stored only in this browser and is called directly from your device — Sentinel never sees or stores it.',
+  profileWebhookLabel: 'Webhook URL',
+  profileWebhookPlaceholder: 'https://api.telegram.org/bot<token>/sendMessage?chat_id=<id>',
+  profileWebhookEnableLabel: 'Enable webhook notifications',
+  profileWebhookSave: 'Save',
+  profileWebhookSaved: 'Saved',
+  profileWebhookTest: 'Send test alert',
+  profileWebhookTestSent: 'Test alert sent — check your webhook destination.',
+  profileWebhookTestFail: 'Could not reach that webhook URL.',
+  profileWebhookTestMessage: 'Sentinel test alert: webhook notifications are working for {addr}.',
 } as const;
 
 const tr: Record<keyof typeof en, string> = {
@@ -273,6 +314,47 @@ const tr: Record<keyof typeof en, string> = {
   gaslessLabel: 'Gazsız (ücret sponsorlu)',
   gaslessHint: 'Ağ ücreti sizin için karşılanır — sadece bunun için XLM gerekmez.',
   gaslessUnavailable: 'Bu dağıtımda gazsız sponsorluk aktif değil.',
+
+  navExplore: 'Keşfet',
+  navProfile: 'Profil',
+
+  exploreTitle: 'Kampanyaları keşfet',
+  exploreSubtitle: 'Sentinel üzerinde çalışan, zincir üstü canlı bağış kampanyaları.',
+  exploreSearchPlaceholder: 'Kampanya ara…',
+  exploreFilterAll: 'Tümü',
+  exploreFilterActive: 'Aktif',
+  exploreFilterCompleted: 'Tamamlanan',
+  exploreConnectPrompt: 'Aşağıdaki her kampanya için canlı fonlama verisini görmek üzere bir cüzdan bağlayın.',
+  exploreConnectButton: 'Cüzdanı bağla',
+  exploreEmpty: 'Aramanızla eşleşen kampanya yok.',
+  exploreLoading: 'Kampanyalar yükleniyor…',
+  exploreRaisedOf: '{a} / {b} XLM',
+  exploreTimeLeft: 'Kalan süre',
+  exploreSupportButton: 'Destekle',
+  exploreViewButton: "Explorer'da görüntüle",
+  badgeUnavailable: 'VERİ ALINAMADI',
+
+  profileTitle: 'Profil',
+  profileSubtitle: 'Bu kampanyadaki cüzdan aktiviteniz ve kişisel uyarı ayarlarınız.',
+  profileTabHistory: 'Geçmiş',
+  profileTabAlerts: 'Uyarılar',
+  profileConnectPrompt: 'Aktivitenizi ve uyarı ayarlarınızı görmek için cüzdanınızı bağlayın.',
+
+  profileHistoryHeading: 'Aktiviteniz',
+  profileHistoryEmpty: 'Bu kampanyada cüzdanınızdan henüz bir bağış, çekim veya iade yok.',
+
+  profileAlertsHeading: 'Webhook uyarıları',
+  profileAlertsHint:
+    'Cüzdanınızın bağış, çekim veya iade işlemi zincir üzerinde onaylandığı anda haber alın. POST ile JSON body kabul eden herhangi bir webhook URL\'si yapıştırın — örneğin bir Telegram bot\'unun sendMessage adresi (https://api.telegram.org/bot<token>/sendMessage) ile chat_id\'niz, ya da bir Discord/Slack gelen webhook\'u. Bu URL yalnızca bu tarayıcıda saklanır ve doğrudan cihazınızdan çağrılır — Sentinel bunu asla görmez veya saklamaz.',
+  profileWebhookLabel: 'Webhook URL',
+  profileWebhookPlaceholder: 'https://api.telegram.org/bot<token>/sendMessage?chat_id=<id>',
+  profileWebhookEnableLabel: 'Webhook bildirimlerini etkinleştir',
+  profileWebhookSave: 'Kaydet',
+  profileWebhookSaved: 'Kaydedildi',
+  profileWebhookTest: 'Test uyarısı gönder',
+  profileWebhookTestSent: 'Test uyarısı gönderildi — webhook hedefinizi kontrol edin.',
+  profileWebhookTestFail: 'Bu webhook URL\'sine ulaşılamadı.',
+  profileWebhookTestMessage: 'Sentinel test uyarısı: {addr} için webhook bildirimleri çalışıyor.',
 };
 
 export const translations: Record<Lang, Record<keyof typeof en, string>> = { en, tr };

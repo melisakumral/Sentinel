@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import './App.css';
 import ConnectGate from './ConnectGate';
-import ProfileMenu from './ProfileMenu';
+import ExplorePage from './ExplorePage';
+import ProfilePage from './ProfilePage';
 import FeedbackButton from './FeedbackButton';
 import TopNav from './TopNav';
 import { useLanguage, translateAppError } from './i18n/useLanguage';
 import type { TranslationKey } from './i18n/translations';
 import { kit, getAvailableWallets, classifyError } from './lib/wallet';
+import { getWebhookConfig, sendWebhookAlert } from './lib/webhook';
 import {
   CONTRACT_ID,
   getCampaign,
@@ -33,6 +35,15 @@ import {
   IconWallet,
 } from './icons';
 
+type Page = 'home' | 'explore' | 'profile';
+
+function currentPage(): Page {
+  const h = window.location.hash;
+  if (h === '#/explore') return 'explore';
+  if (h === '#/profile') return 'profile';
+  return 'home';
+}
+
 type TxState = 'idle' | 'pending' | 'success' | 'fail';
 
 // A lookback window that stays comfortably inside testnet's event retention.
@@ -52,7 +63,10 @@ const EVENT_LABEL_KEY: Record<ActivityEvent['type'], TranslationKey> = {
 
 function App() {
   const { t } = useLanguage();
+  const [page, setPage] = useState<Page>(currentPage);
   const [pubKey, setPubKey] = useState<string | null>(null);
+  const pubKeyRef = useRef<string | null>(null);
+  pubKeyRef.current = pubKey;
   const [connecting, setConnecting] = useState(false);
 
   const [xlmBalance, setXlmBalance] = useState<bigint | null>(null);
@@ -164,11 +178,34 @@ function App() {
           const merged = [...fresh.filter((e) => !seen.has(e.id)).reverse(), ...prev];
           return merged.slice(0, MAX_ACTIVITY_ITEMS);
         });
+
+        // Profile page's personal webhook alerts: notify the connected
+        // wallet's own device (Telegram/Discord/Slack/etc., see lib/webhook.ts)
+        // the moment one of *their* deposit/claim/refund events confirms.
+        const mine = pubKeyRef.current;
+        if (mine) {
+          const cfg = getWebhookConfig(mine);
+          if (cfg.enabled && cfg.url) {
+            for (const ev of fresh) {
+              if (ev.actor === mine) {
+                sendWebhookAlert(cfg.url, `Sentinel: your ${ev.type} of ${fromStroops(ev.amount).toFixed(2)} XLM just confirmed on-chain.`);
+              }
+            }
+          }
+        }
       }
       nextLedgerRef.current = latestLedger + 1;
     } catch (e) {
       console.error('event polling', e);
     }
+  }, []);
+
+  // --- Page routing: '#/', '#/explore', '#/profile' all live inside this
+  // component so they share wallet state without lifting it to a context. ---
+  useEffect(() => {
+    const onHashChange = () => setPage(currentPage());
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
   useEffect(() => {
@@ -289,6 +326,17 @@ function App() {
   const msgVariant = tx === 'success' ? 'success' : tx === 'fail' ? 'danger' : 'accent';
   const MsgIcon = tx === 'pending' ? IconClock : tx === 'success' ? IconCheckCircle : IconAlert;
 
+  if (page === 'explore') {
+    return (
+      <div className="sentinel-app">
+        <ExplorePage pubKey={pubKey} isOwner={isRecipient} onDisconnect={disconnect} connecting={connecting} onConnect={connectWallet} />
+        <div className="sn-feedback-fab">
+          <FeedbackButton align="right" placement="up" />
+        </div>
+      </div>
+    );
+  }
+
   if (!pubKey) {
     return (
       <div className="sentinel-app">
@@ -297,30 +345,22 @@ function App() {
     );
   }
 
+  if (page === 'profile') {
+    return (
+      <div className="sentinel-app">
+        <ProfilePage pubKey={pubKey} isOwner={isRecipient} onDisconnect={disconnect} events={events} now={now} />
+        <div className="sn-feedback-fab">
+          <FeedbackButton align="right" placement="up" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="sentinel-app">
       <div className="sn-dash-page">
-        <TopNav active="home" />
-        <div className="sn-dash sn-fade-in">
-        <aside className="sn-side">
-          <div className="sn-side-section" style={{ borderTop: 'none', paddingTop: 0 }}>
-            <span className="sn-side-label">{t('sideAccount')}</span>
-            <ProfileMenu pubKey={pubKey} isOwner={isRecipient} onDisconnect={disconnect} align="left" />
-          </div>
-
-          <div className="sn-side-section">
-            <span className="sn-side-label">{t('sideContract')}</span>
-            <span className="sn-side-value sn-mono">{CONTRACT_ID ? short(CONTRACT_ID) : t('sideNotSet')}</span>
-          </div>
-
-          <div className="sn-side-spacer" />
-
-          <div style={{ marginTop: 8 }}>
-            <FeedbackButton align="left" />
-          </div>
-        </aside>
-
-        <main className="sn-dash-main">
+        <TopNav active="home" profile={{ pubKey, isOwner: isRecipient, onDisconnect: disconnect }} />
+        <main className="sn-dash-main sn-fade-in">
           <div className="sn-dash-header">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -330,6 +370,9 @@ function App() {
                 <span className={`sn-pill sn-pill--${stateBadge.variant}`}>{stateBadge.t}</span>
               </div>
               <p className="sn-dash-subtitle">{t('dashSubtitle')}</p>
+              <span className="sn-pill sn-pill--neutral sn-mono" style={{ marginTop: 8 }} title={CONTRACT_ID ?? ''}>
+                {t('sideContract')}: {CONTRACT_ID ? short(CONTRACT_ID) : t('sideNotSet')}
+              </span>
             </div>
             <a href="https://friendbot.stellar.org" target="_blank" rel="noreferrer" className="sn-footer-link">
               <IconDroplet size={13} />
@@ -577,7 +620,9 @@ function App() {
             </div>
           </div>
         </main>
-        </div>
+      </div>
+      <div className="sn-feedback-fab">
+        <FeedbackButton align="right" placement="up" />
       </div>
     </div>
   );

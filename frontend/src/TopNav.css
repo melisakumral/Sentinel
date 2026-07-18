@@ -1,4 +1,4 @@
-/* Hardcoded to the shared Stellar Blue palette (same reasoning as
+/* Hardcoded to the shared Neon Cyber palette (same reasoning as
    ProfileMenu.css / FeedbackButton.css) so it renders identically whether
    mounted inside .sentinel-app or .watch-app. Fixed height (56px) so both
    scopes can reserve exact space for it via calc(100vh - 56px). */
@@ -10,8 +10,8 @@
   align-items: center;
   gap: 8px;
   padding: 0 24px;
-  border-bottom: 1px solid #27272a;
-  background: rgba(9, 9, 11, 0.75);
+  border-bottom: 1px solid #1d2233;
+  background: rgba(10, 11, 16, 0.75);
   backdrop-filter: blur(6px);
   font-family: 'Inter', system-ui, sans-serif;
   position: sticky;
@@ -24,7 +24,7 @@
   align-items: center;
   gap: 8px;
   text-decoration: none;
-  color: #f4f4f5;
+  color: #eef2fb;
   flex-shrink: 0;
   margin-right: 12px;
 }
@@ -32,8 +32,8 @@
   width: 26px;
   height: 26px;
   border-radius: 7px;
-  background: #17171a;
-  border: 1px solid #3a3a3f;
+  background: #151827;
+  border: 1px solid #2b3145;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -56,7 +56,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: #a1a1aa;
+  color: #9aa3b8;
   text-decoration: none;
   padding: 7px 12px;
   border-radius: 8px;
@@ -64,21 +64,26 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .tn-link:hover {
-  color: #f4f4f5;
+  color: #eef2fb;
   background: rgba(255, 255, 255, 0.05);
 }
 .tn-link--active {
-  color: #f4f4f5;
-  background: rgba(59, 130, 246, 0.14);
+  color: #eef2fb;
+  background: rgba(0, 229, 255, 0.14);
 }
 
 .tn-spacer {
   flex: 1;
 }
 
+.tn-profile-slot {
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
 .tn-lang {
   display: flex;
-  border: 1px solid #27272a;
+  border: 1px solid #1d2233;
   border-radius: 20px;
   padding: 2px;
   flex-shrink: 0;
@@ -86,7 +91,7 @@
 .tn-lang-btn {
   background: transparent;
   border: none;
-  color: #71717a;
+  color: #6b7386;
   font-family: inherit;
   font-size: 11px;
   font-weight: 700;
@@ -97,11 +102,16 @@
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 .tn-lang-btn:hover {
-  color: #f4f4f5;
+  color: #eef2fb;
 }
 .tn-lang-btn--active {
-  background: #3b82f6;
-  color: #ffffff;
+  background: #00e5ff;
+  color: #04141a;
+}
+
+/* ---------- mobile bottom tab bar ---------- */
+.tn-mobile-tabs {
+  display: none;
 }
 
 @media (max-width: 640px) {
@@ -115,8 +125,43 @@
   .tn-brand {
     margin-right: 4px;
   }
-  .tn-link {
-    padding: 6px 8px;
-    font-size: 12px;
+  .tn-links {
+    display: none;
+  }
+
+  .tn-mobile-tabs {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: rgba(10, 11, 16, 0.92);
+    backdrop-filter: blur(6px);
+    border-top: 1px solid #1d2233;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+  }
+  .tn-mtab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 2px;
+    color: #6b7386;
+    text-decoration: none;
+    font-size: 10.5px;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: color 0.15s ease;
+  }
+  .tn-mtab span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .tn-mtab--active {
+    color: #00e5ff;
   }
 }

@@ -2,21 +2,21 @@
    never collides with the (intentionally distinct) Sentinel Watch theme. */
 
 .sentinel-app {
-  --bg: #09090b;
-  --surface: #121214;
-  --surface-raised: #17171a;
-  --border: #27272a;
-  --border-strong: #3a3a3f;
-  --accent: #3b82f6;
-  --accent-hover: #5b93f7;
-  --accent-bg: rgba(59, 130, 246, 0.1);
-  --success: #34d399;
-  --success-bg: rgba(52, 211, 153, 0.1);
-  --danger: #f87171;
-  --danger-bg: rgba(248, 113, 113, 0.1);
-  --text: #f4f4f5;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --bg: #0a0b10;
+  --surface: #10121b;
+  --surface-raised: #151827;
+  --border: #1d2233;
+  --border-strong: #2b3145;
+  --accent: #00e5ff;
+  --accent-hover: #33ebff;
+  --accent-bg: rgba(0, 229, 255, 0.1);
+  --success: #00ff9c;
+  --success-bg: rgba(0, 255, 156, 0.1);
+  --danger: #ff4d4d;
+  --danger-bg: rgba(255, 77, 77, 0.1);
+  --text: #eef2fb;
+  --text-secondary: #9aa3b8;
+  --text-muted: #6b7386;
   --font-sans: 'Inter', system-ui, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
 
@@ -53,7 +53,7 @@
 }
 .sn-btn--primary {
   background: var(--accent);
-  color: #ffffff;
+  color: #04141a;
 }
 .sn-btn--primary:hover:not(:disabled) {
   background: var(--accent-hover);
@@ -149,86 +149,20 @@
   color: var(--text);
 }
 
-/* ---------- dashboard shell: sidebar + main ---------- */
+/* ---------- dashboard shell: single full-width page, no sidebar ---------- */
 .sn-dash-page {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-.sn-dash {
-  display: flex;
-  flex: 1;
-  min-height: calc(100vh - 56px);
-}
-
-.sn-side {
-  width: 240px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 24px 20px;
-  border-right: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.012);
-  max-height: calc(100vh - 56px);
-  overflow-y: auto;
-}
-
-.sn-side-section {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  padding: 14px 0;
-  border-top: 1px solid var(--border);
-}
-.sn-side-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.sn-side-value {
-  font-size: 13px;
-  color: var(--text);
-  word-break: break-word;
-}
-
-.sn-side-spacer {
-  flex: 1;
-}
-
-.sn-side-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-sans);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-decoration: none;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-top: 8px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
-}
-.sn-side-link:hover {
-  border-color: var(--border-strong);
-  color: var(--text);
-}
-.sn-side-link--danger:hover {
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
 .sn-dash-main {
   flex: 1;
-  min-width: 0;
+  min-height: calc(100vh - 56px);
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
   padding: 32px 40px 60px;
-  overflow-y: auto;
 }
 
 .sn-dash-header {
@@ -425,6 +359,55 @@
   color: var(--text);
 }
 
+/* ---------- floating feedback button (mounted once at the app root) ---------- */
+.sn-feedback-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 45;
+}
+
+/* ---------- ambient full-viewport particle field (ParticleField.tsx) ---------- */
+.sn-ambient-field {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.sn-ambient-particle {
+  position: absolute;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.5;
+}
+.sn-ambient-particle--cyan {
+  background: #00e5ff;
+  box-shadow: 0 0 7px rgba(0, 229, 255, 0.85);
+}
+.sn-ambient-particle--blue {
+  background: #2962ff;
+  box-shadow: 0 0 7px rgba(41, 98, 255, 0.85);
+}
+.sn-ambient-particle--teal {
+  background: #00ffc2;
+  box-shadow: 0 0 7px rgba(0, 255, 194, 0.85);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sn-ambient-field {
+    display: none;
+  }
+}
+
+/* Every direct page under .sentinel-app needs a stacking context above the
+   fixed ambient field (z-index: 0) despite painting after it in DOM order. */
+.sn-gate-page,
+.sn-dash-page,
+.sn-page {
+  position: relative;
+  z-index: 1;
+}
+
 /* ==================================================================
    Connect gate — split-screen wallet connect landing
    ================================================================== */
@@ -464,7 +447,7 @@
   left: -140px;
   width: 340px;
   height: 340px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.18), transparent 70%);
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.18), transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -477,7 +460,7 @@
   font-weight: 600;
   color: var(--success);
   background: var(--success-bg);
-  border: 1px solid rgba(52, 211, 153, 0.25);
+  border: 1px solid rgba(0, 255, 156, 0.25);
   padding: 5px 10px;
   border-radius: 20px;
   width: fit-content;
@@ -518,16 +501,16 @@
   cursor: default;
 }
 .sn-wallet-badge--blue {
-  color: #60a5fa;
-  background: rgba(59, 130, 246, 0.12);
+  color: #00e5ff;
+  background: rgba(0, 229, 255, 0.12);
 }
 .sn-wallet-badge--indigo {
-  color: #818cf8;
-  background: rgba(99, 102, 241, 0.12);
+  color: #2962ff;
+  background: rgba(41, 98, 255, 0.12);
 }
 .sn-wallet-badge--teal {
-  color: #2dd4bf;
-  background: rgba(45, 212, 191, 0.12);
+  color: #00ffc2;
+  background: rgba(0, 255, 194, 0.12);
 }
 
 .sn-gate-right {
@@ -538,9 +521,9 @@
   justify-content: center;
   padding: 56px;
   background-image:
-    radial-gradient(circle at 28% 22%, rgba(59, 130, 246, 0.18), transparent 45%),
-    radial-gradient(circle at 78% 68%, rgba(99, 102, 241, 0.14), transparent 45%),
-    radial-gradient(circle at 50% 105%, rgba(45, 212, 191, 0.1), transparent 40%),
+    radial-gradient(circle at 28% 22%, rgba(0, 229, 255, 0.18), transparent 45%),
+    radial-gradient(circle at 78% 68%, rgba(41, 98, 255, 0.14), transparent 45%),
+    radial-gradient(circle at 50% 105%, rgba(0, 255, 194, 0.1), transparent 40%),
     radial-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: auto, auto, auto, 22px 22px;
   background-color: var(--surface);
@@ -586,13 +569,13 @@
   flex-shrink: 0;
 }
 .sn-feature-icon--blue {
-  color: #60a5fa;
+  color: #00e5ff;
 }
 .sn-feature-icon--indigo {
-  color: #818cf8;
+  color: #2962ff;
 }
 .sn-feature-icon--teal {
-  color: #2dd4bf;
+  color: #00ffc2;
 }
 .sn-feature-title {
   font-size: 14px;
@@ -636,10 +619,10 @@
 @keyframes sn-core-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.28);
+    box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.28);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 10px rgba(0, 229, 255, 0);
   }
 }
 
@@ -660,7 +643,7 @@
   inset: 0;
   border-radius: 50%;
   overflow: hidden;
-  background: conic-gradient(from 0deg, transparent 0deg, rgba(59, 130, 246, 0.22) 40deg, transparent 100deg);
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 229, 255, 0.22) 40deg, transparent 100deg);
   animation: sn-sweep 4.5s linear infinite;
 }
 @keyframes sn-sweep {
@@ -681,16 +664,16 @@
   transition: opacity 0.5s ease;
 }
 .sn-particle--blue {
-  background: #3b82f6;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);
+  background: #00e5ff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.7);
 }
 .sn-particle--indigo {
-  background: #818cf8;
+  background: #2962ff;
   box-shadow: 0 0 8px rgba(129, 140, 248, 0.7);
 }
 .sn-particle--teal {
-  background: #2dd4bf;
-  box-shadow: 0 0 8px rgba(45, 212, 191, 0.7);
+  background: #00ffc2;
+  box-shadow: 0 0 8px rgba(0, 255, 194, 0.7);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -708,6 +691,147 @@
   background: var(--danger-bg);
   border: 1px solid var(--danger);
   color: var(--danger);
+}
+
+/* ==================================================================
+   Generic page shell — Explore, Profile (no sidebar, full width)
+   ================================================================== */
+.sn-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.sn-page-main {
+  flex: 1;
+  min-height: calc(100vh - 56px);
+  max-width: 1180px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 32px 40px 60px;
+}
+
+/* ---------- Explore ---------- */
+.sn-explore-toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.sn-explore-search {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+.sn-filter-tabs {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.sn-filter-tab {
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 8px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+.sn-filter-tab:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.sn-filter-tab--active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.sn-campaign-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.sn-campaign-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sn-campaign-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sn-campaign-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+.sn-campaign-card-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.sn-campaign-card-raised {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ---------- Profile / tabs ---------- */
+.sn-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sn-tab {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 4px;
+  margin-right: 20px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.sn-tab:hover {
+  color: var(--text);
+}
+.sn-tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.sn-field-label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.sn-field-hint {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+.sn-inline-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 12px 0 16px;
+  cursor: pointer;
 }
 
 /* ---------- responsive ---------- */
@@ -743,35 +867,10 @@
 }
 
 @media (max-width: 760px) {
-  .sn-dash {
-    flex-direction: column;
-  }
-  .sn-side {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: 16px 20px;
-  }
-  .sn-side-section {
-    border-top: none;
-    padding: 0;
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-  }
-  .sn-side-label::after {
-    content: ':';
-  }
-  .sn-side-spacer {
-    display: none;
-  }
-  .sn-side-link {
-    margin-top: 0;
-  }
   .sn-dash-main {
+    padding: 24px 18px 48px;
+  }
+  .sn-page-main {
     padding: 24px 18px 48px;
   }
 }
@@ -785,5 +884,20 @@
   }
   .sn-stat-grid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Room for TopNav's fixed bottom tab bar (see TopNav.css) so page content
+   never sits underneath it. */
+@media (max-width: 640px) {
+  .sn-dash-main,
+  .sn-page-main {
+    padding-bottom: 84px;
+  }
+  .sn-gate {
+    padding-bottom: 64px;
+  }
+  .sn-feedback-fab {
+    bottom: 74px;
   }
 }
