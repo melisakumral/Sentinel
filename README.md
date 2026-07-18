@@ -118,8 +118,8 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 Per the Level 5 spec, user intake needs a Google Form (wallet address, email, name,
 product feedback/rating) with responses exported to Excel and linked here:
 
-- **Google Form**: [Sentinel user onboarding form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog)
-- **Responses (Google Sheet)**: [Sentinel user feedback — responses](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?resourcekey=&gid=1781705798#gid=1781705798) — ⬜ export to `.xlsx` (Google Sheets → File → Download → Microsoft Excel) and add the file to `docs/` once there are enough real responses to summarize
+* **Feedback Collection:** [Submit Feedback via Google Form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog)
+* **Exported Responses (Excel):** [View Raw User Feedback Data](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?usp=sharing) — ⬜ still a live Google Sheet; export to `.xlsx` (File → Download → Microsoft Excel) and add the file to `docs/` once there are enough real responses to summarize
 
 ### Planned next-iteration roadmap (from user feedback)
 
