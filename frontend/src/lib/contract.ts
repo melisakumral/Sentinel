@@ -46,7 +46,12 @@ const i128 = (v: bigint) => nativeToScVal(v, { type: 'i128' });
 const addr = (a: string) => new Address(a).toScVal();
 
 // --- Generic read (simulation) against an arbitrary contract ---
-async function simReadOn(contractId: string, sourceAddress: string, fn: string, args: any[] = []): Promise<any> {
+// A single read (e.g. getCampaignFor) fires up to 6 of these in parallel
+// against the public testnet RPC, which occasionally drops/errors one call
+// under that concurrent load even though the others succeed — retrying once
+// clears it almost every time without meaningfully slowing down the common
+// (already-succeeding) case.
+async function simReadOnAttempt(contractId: string, sourceAddress: string, fn: string, args: any[]): Promise<any> {
   const account = await server.getAccount(sourceAddress);
   const contract = new Contract(contractId);
   const tx = new TransactionBuilder(account, {
@@ -62,6 +67,15 @@ async function simReadOn(contractId: string, sourceAddress: string, fn: string, 
     throw new Error(`Simulation failed (${fn}): ${sim.error}`);
   }
   return scValToNative(sim.result!.retval);
+}
+
+async function simReadOn(contractId: string, sourceAddress: string, fn: string, args: any[] = []): Promise<any> {
+  try {
+    return await simReadOnAttempt(contractId, sourceAddress, fn, args);
+  } catch (e) {
+    console.warn(`simReadOn(${fn}) failed once, retrying:`, e);
+    return simReadOnAttempt(contractId, sourceAddress, fn, args);
+  }
 }
 
 // Level 1 requirement: fetch the connected wallet's own native XLM balance
