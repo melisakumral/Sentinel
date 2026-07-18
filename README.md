@@ -66,7 +66,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | Smart contract deployment workflow | ✅ `stellar contract deploy`/`invoke` steps below, real deployment |
 | Mobile-responsive frontend | ✅ `app-shell`/`app-card` + `@media (max-width: 480px)` (`frontend/src/App.css`) |
 | Error handling & loading states | ✅ `classifyError`, `loadingCampaign` state, transaction status box |
-| Contract + frontend tests | ✅ 8 Rust tests (`cargo test --workspace`) + 42 Vitest tests (`npm run test`) = **50 tests** |
+| Contract + frontend tests | ✅ 8 Rust tests (`cargo test --workspace`) + 49 Vitest tests (`npm run test`) = **57 tests** |
 | Production-ready architecture | ✅ Cargo workspace, pure/testable modules (`stroops.ts`, `errors.ts`), CI |
 | Documentation & demo presentation | ✅ This README + the delivery info below |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
@@ -80,7 +80,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | Requirement | Status |
 |-----------|-------|
 | Fully functional, production-ready MVP | ✅ Full deposit/claim/refund flow (`App.tsx`), split into a `ConnectGate` (wallet onboarding) and a `Dashboard`, plus the separate **Sentinel Watch** product |
-| Stable frontend + smart contract architecture | ✅ Cargo workspace (campaign + registry) + typed React/TS, 8 Rust + 42 Vitest tests |
+| Stable frontend + smart contract architecture | ✅ Cargo workspace (campaign + registry) + typed React/TS, 8 Rust + 49 Vitest tests |
 | Mobile-responsive UI | ✅ `@media` breakpoints across `App.css`/`WatchApp.css` — sidebar collapses to a top bar, stat grids reflow |
 | Proper loading states & error handling | ✅ `classifyError()`, `loadingCampaign`/poll-error states, try/catch on every RPC call, **and** a top-level [`ErrorBoundary`](frontend/src/ErrorBoundary.tsx) that catches render crashes instead of blanking the screen |
 | 10+ real users onboarded | ⬜ Manual — share the live link; see [Remaining Manual Steps](#-remaining-manual-steps) |
@@ -108,7 +108,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | New features based on feedback | ✅ i18n (`frontend/src/i18n/`) and the navigation redesign above were both direct responses to user testing feedback |
 | Professional pitch deck (PPT) | ✅ [Sentinel pitch deck (Canva)](https://www.canva.com/design/DAHPsLQnLiE/T-axOd-10_AiIVp6u9qdfw/edit) — problem, solution, market opportunity, architecture, growth strategy, roadmap |
 | Demo video (all features + user flow) | ⬜ Manual — see [Remaining Manual Steps](#-remaining-manual-steps) |
-| 20+ meaningful commits | ⬜ See git history — currently short of 20, will clear this bar with the commits for this level |
+| 20+ meaningful commits | ✅ 30 commits as of this update — see git history |
 | Updated documentation | ✅ this section + [Project Structure](#️-project-structure) kept current |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
 | Live deployed app | ⬜ Manual — see [Remaining Manual Steps](#-remaining-manual-steps) |
@@ -149,7 +149,7 @@ in. So far, feedback already acted on:
 | Social media launch post (Twitter/X) | ⬜ Manual — draft ready, see [Remaining Manual Steps](#-remaining-manual-steps) |
 | Promotional/showcase content | ⬜ Manual |
 | Ecosystem contribution (blog / workshop / video / OSS / community session) | ⬜ Manual — this README itself doubles as technical documentation; a dedicated blog post is drafted, see Remaining Manual Steps |
-| 30+ meaningful commits | ⬜ See git history — will clear this bar with the commits for this level |
+| 30+ meaningful commits | ✅ 30 commits as of this update — see git history |
 | Complete documentation & production setup | ✅ this README, [Project Structure](#️-project-structure), [Fee Sponsorship](#-black-belt-fee-sponsorship-gasless-transactions) setup docs below |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
 
@@ -203,7 +203,7 @@ checkbox just shows a clear error if unconfigured):
 | Requirement | Status |
 |-----------|-------|
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
-| 30+ meaningful commits | ⬜ 22 as of this update — see git history; grows with every real iteration |
+| 30+ meaningful commits | ✅ 30 as of this update — see git history; grows with every real iteration |
 | Live production app | ⬜ Manual — see [Remaining Manual Steps](#-remaining-manual-steps); `vercel.json` + docs are ready |
 | Proof of 50+ new mainnet users | ⬜ Manual — needs a mainnet deployment first (Level 6) |
 | Mainnet transaction proof | ⬜ Manual — Activity feed / Sentinel Watch already surface it live once it exists |
