@@ -118,8 +118,8 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 Per the Level 5 spec, user intake needs a Google Form (wallet address, email, name,
 product feedback/rating) with responses exported to Excel and linked here:
 
-- **Google Form**: `(add link once created — see Remaining Manual Steps)`
-- **Exported responses (Excel)**: `(add link/file once there are real responses, e.g. docs/user-feedback.xlsx)`
+* **Feedback Collection:** [Submit Feedback via Google Form](https://docs.google.com/forms/d/1663m62Hcgd4J7f0-EPbO50NTljgHHOBMtuqtU9tlnrc/viewform)
+* **Exported Responses (Excel):** [View Raw User Feedback Data](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?usp=sharing)
 
 ### Planned next-iteration roadmap (from user feedback)
 
