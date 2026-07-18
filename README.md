@@ -72,7 +72,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
 | 10+ meaningful commits | ✅ See git history |
 | Live demo link (Vercel etc.) | ✅ https://frontend-liart-eight-29.vercel.app |
-| Screenshots (mobile, CI, test output) | ⬜ https://www.loom.com/share/990394f3fc3a4d289aecb7e18f242654|
+| Screenshots (mobile, CI, test output) | ✅ see [Screenshots / demo](#-delivery-info) below |
 | Demo video (1-2 min) | ⬜(https://www.loom.com/share/990394f3fc3a4d289aecb7e18f242654) |
 
 ## 💚 Level 4 Requirements — Coverage
@@ -297,12 +297,13 @@ stellar contract invoke --id CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EM
 | **Pitch deck (Canva)** | [View / edit](https://www.canva.com/design/DAHPsLQnLiE/T-axOd-10_AiIVp6u9qdfw/edit) |
 | **Google Form (user onboarding)** | [Open form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog) |
 | **Form responses (Google Sheet)** | [Open sheet](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?resourcekey=&gid=1781705798#gid=1781705798) |
-| **Screenshot: wallet options** | `docs/wallet-options.png (add)` |
-| **Screenshot: connected wallet + balance/progress** | `docs/connected-progress.png (add)` |
-| **Screenshot: successful transaction** | `docs/tx-success.png (add)` |
-| **Screenshot: mobile responsive UI** | `docs/mobile.png (add)` |
-| **Screenshot: CI pipeline running** | `docs/ci-run.png (add)` |
-| **Screenshot: test output (3+ passing tests)** | `docs/test-output.png (add)` |
+| **Screenshot: landing / connect wallet** | [`docs/wallet-options.png`](docs/wallet-options.png) |
+| **Screenshot: Explore, live campaign data** | [`docs/connected-progress.png`](docs/connected-progress.png) |
+| **Screenshot: Sentinel Watch, live event feed** | [`docs/watch.png`](docs/watch.png) |
+| **Screenshot: successful transaction** | ⬜ needs a real wallet interaction — see [Remaining Manual Steps](#-remaining-manual-steps) |
+| **Screenshot: mobile responsive UI** | [`docs/mobile.png`](docs/mobile.png) |
+| **Screenshot: CI pipeline running** | [`docs/ci-run.png`](docs/ci-run.png) |
+| **Screenshot: test output (49 passing tests)** | [`docs/test-output.png`](docs/test-output.png) |
 | **Demo video (1-2 min)** | `(add)` |
 
 ## ⬜ Remaining Manual Steps
@@ -310,9 +311,9 @@ stellar contract invoke --id CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EM
 The following couldn't be automated because they require a browser, an account login, real third-party users, or screen recording:
 
 1. ~~**Deploy to Vercel**~~ — ✅ done: https://frontend-liart-eight-29.vercel.app (Root Directory = `frontend`, `VITE_CONTRACT_ID` set, GitHub repo connected for auto-deploy on every push to `main`).
-2. **Screenshots** — run the app with `npm run dev`, connect with Freighter, capture in order: the wallet-options modal, the connected+balance/progress screen, the successful-transaction box, the `#/watch` monitoring dashboard, then narrow the browser for the mobile view, and save to `docs/`.
-3. **CI screenshot** — after this commit is pushed, screenshot the running pipeline on GitHub's Actions tab.
-4. **Test output screenshot** — screenshot the output of `cargo test --workspace` and/or `npm run test -- --run`.
+2. ~~**Screenshots**~~ — ✅ done for everything that doesn't need a real wallet: landing, Explore, Sentinel Watch, mobile, CI, test output (all in `docs/`, linked above). Still ⬜ the successful-transaction screenshot, which needs a real Freighter connection + donation.
+3. ~~**CI screenshot**~~ — ✅ [`docs/ci-run.png`](docs/ci-run.png).
+4. ~~**Test output screenshot**~~ — ✅ [`docs/test-output.png`](docs/test-output.png) (49 passing frontend tests).
 5. **Demo video** — a short walkthrough of the app (connect wallet → donate → result → Sentinel Watch).
 6. **Onboard 10+ real users (Level 4)** — share the deployed link; each donor's `deposit`/`claim`/`refund` transaction is a real, on-chain proof of interaction — collect the stellar.expert links (the Activity feed in the app already lists them).
 7. **Collect & summarize feedback (Level 4)** — point users at the in-app **Feedback** button (opens a GitHub issue labeled `feedback`); once a few come in, write a short summary here or in a `docs/feedback-summary.md`.
