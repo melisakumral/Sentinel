@@ -184,8 +184,13 @@ Donor wallet ──sign(inner tx)──▶ /api/sponsor-fee-bump ──wrap + si
                                            deposit/claim/refund on CONTRACT_ID
 ```
 
-**Enable it** (optional — the app works normally without it; the "Gasless"
-checkbox just shows a clear error if unconfigured):
+**Status on the live deployment**: ✅ enabled. A dedicated, friendbot-funded
+testnet sponsor account is configured via `SPONSOR_SECRET_KEY` on
+[the live deployment](https://frontend-liart-eight-29.vercel.app) — the
+"Gasless (sponsored fee)" checkbox in the donation panel works end to end.
+
+**To set it up on your own deployment** (optional — the app works normally
+without it; the "Gasless" checkbox just shows a clear error if unconfigured):
 
 1. Generate a dedicated sponsor keypair: `stellar keys generate sponsor --network testnet --fund` (or `stellar keys address sponsor` + fund via friendbot).
 2. In the Vercel project settings, add an environment variable **`SPONSOR_SECRET_KEY`** with the sponsor's secret (`S...`) — **never** commit this, and never prefix it `VITE_` (that would ship it to the browser).
