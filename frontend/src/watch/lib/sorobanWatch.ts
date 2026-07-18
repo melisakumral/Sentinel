@@ -2,7 +2,7 @@
 // (which is hard-wired to the Sentinel campaign contract), everything here is
 // contract-agnostic: it works against whatever Contract ID the user types in,
 // because Watch is meant to monitor and dry-run *any* Soroban contract.
-import { rpc, Contract, TransactionBuilder, BASE_FEE, scValToNative, type xdr } from 'stellar-sdk';
+import { rpc, Contract, TransactionBuilder, BASE_FEE, scValToNative, type xdr } from '@stellar/stellar-sdk';
 import { RPC_URL, NETWORK_PASSPHRASE } from '../../lib/contract';
 import type { WatchEvent } from '../types';
 

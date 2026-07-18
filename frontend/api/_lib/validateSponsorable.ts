@@ -1,7 +1,7 @@
 // Pure validation extracted from sponsor-fee-bump.ts so the security-critical
 // check — "does this signed transaction only touch our contract's allowed
 // write functions?" — can be unit-tested without a live network/RPC call.
-import { Address, Transaction, TransactionBuilder } from 'stellar-sdk';
+import { Address, Transaction, TransactionBuilder } from '@stellar/stellar-sdk';
 
 export const ALLOWED_FUNCTIONS = new Set(['deposit', 'claim', 'refund']);
 

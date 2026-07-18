@@ -15,7 +15,7 @@
 // deployment's contract (`VITE_CONTRACT_ID`) calling an allowed write
 // function — otherwise anyone could point this endpoint at an unrelated
 // transaction and drain the sponsor account for free.
-import { Keypair, Networks, TransactionBuilder, rpc } from 'stellar-sdk';
+import { Keypair, Networks, TransactionBuilder, rpc } from '@stellar/stellar-sdk';
 import { validateSponsorable, isValidationFail } from './_lib/validateSponsorable.js';
 
 // Minimal structural types for the Vercel Node request/response — avoids

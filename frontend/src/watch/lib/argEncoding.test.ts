@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Keypair, scValToNative } from 'stellar-sdk';
+import { Keypair, scValToNative } from '@stellar/stellar-sdk';
 import { encodeArg, encodeArgs } from './argEncoding';
 
 describe('encodeArg', () => {

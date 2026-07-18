@@ -10,7 +10,7 @@ import {
   Operation,
   TransactionBuilder,
   nativeToScVal,
-} from 'stellar-sdk';
+} from '@stellar/stellar-sdk';
 import { validateSponsorable } from './validateSponsorable';
 
 const NETWORK = Networks.TESTNET;

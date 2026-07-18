@@ -10,7 +10,7 @@ import {
   scValToNative,
   Address,
   Asset,
-} from 'stellar-sdk';
+} from '@stellar/stellar-sdk';
 import { kit, WalletNetwork } from './wallet';
 
 export const CONTRACT_ID = import.meta.env.VITE_CONTRACT_ID as string | undefined;

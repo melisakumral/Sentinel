@@ -1,6 +1,6 @@
 // Encodes a raw string typed in the Simulator UI into a Soroban ScVal, given
 // a user-picked type tag. Pure (no network), tested in isolation.
-import { Address, nativeToScVal, xdr } from 'stellar-sdk';
+import { Address, nativeToScVal, xdr } from '@stellar/stellar-sdk';
 
 export const ARG_TYPES = [
   'address',
