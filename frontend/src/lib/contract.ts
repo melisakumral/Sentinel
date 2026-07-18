@@ -17,6 +17,13 @@ export const CONTRACT_ID = import.meta.env.VITE_CONTRACT_ID as string | undefine
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 export const NETWORK_PASSPHRASE = Networks.TESTNET;
 
+// Soroban reads are simulated, and simulation still needs *some* existing
+// funded account to build the transaction against, even though nothing is
+// signed or spent. This is a public, keyless (we never held/use its secret),
+// friendbot-funded testnet-only account for read-only requests — e.g. the
+// Explore page listing campaign data before a visitor has connected a wallet.
+export const PUBLIC_READ_SOURCE = 'GDUAMU4FYDURVTPE7VP4A5SOSTSJMTLDG5KQCF3JPHDGKQZMB34FYKRP';
+
 // Pure (dependency-free, testable) stroop <-> XLM conversion lives in `stroops.ts`.
 export { STROOPS_PER_XLM, toStroops, fromStroops } from './stroops';
 
@@ -57,11 +64,6 @@ async function simReadOn(contractId: string, sourceAddress: string, fn: string, 
   return scValToNative(sim.result!.retval);
 }
 
-// --- Read against the campaign contract ---
-function simRead(sourceAddress: string, fn: string, args: any[] = []): Promise<any> {
-  return simReadOn(requireContractId(), sourceAddress, fn, args);
-}
-
 // Level 1 requirement: fetch the connected wallet's own native XLM balance
 // (independent of any campaign contribution) by simulating a `balance` call
 // against the native XLM SAC.
@@ -79,15 +81,16 @@ export interface Campaign {
   contribution: bigint; // the connected wallet's own contribution
 }
 
-// Fetches the full campaign state in one shot (for live tracking).
-export async function getCampaign(sourceAddress: string): Promise<Campaign> {
+// Fetches the full state of an arbitrary campaign contract in one shot.
+// Powers the Explore page, which lists more than just VITE_CONTRACT_ID.
+export async function getCampaignFor(contractId: string, sourceAddress: string): Promise<Campaign> {
   const [total, target, deadline, recipient, claimed, contribution] = await Promise.all([
-    simRead(sourceAddress, 'get_total'),
-    simRead(sourceAddress, 'get_target'),
-    simRead(sourceAddress, 'get_deadline'),
-    simRead(sourceAddress, 'get_recipient'),
-    simRead(sourceAddress, 'is_claimed'),
-    simRead(sourceAddress, 'get_contribution', [addr(sourceAddress)]),
+    simReadOn(contractId, sourceAddress, 'get_total'),
+    simReadOn(contractId, sourceAddress, 'get_target'),
+    simReadOn(contractId, sourceAddress, 'get_deadline'),
+    simReadOn(contractId, sourceAddress, 'get_recipient'),
+    simReadOn(contractId, sourceAddress, 'is_claimed'),
+    simReadOn(contractId, sourceAddress, 'get_contribution', [addr(sourceAddress)]),
   ]);
   return {
     total: BigInt(total ?? 0),
@@ -97,6 +100,11 @@ export async function getCampaign(sourceAddress: string): Promise<Campaign> {
     claimed: Boolean(claimed),
     contribution: BigInt(contribution ?? 0),
   };
+}
+
+// Fetches the full campaign state in one shot (for live tracking).
+export function getCampaign(sourceAddress: string): Promise<Campaign> {
+  return getCampaignFor(requireContractId(), sourceAddress);
 }
 
 // --- Write path, split so the sponsored (fee-bump) flow can reuse the same

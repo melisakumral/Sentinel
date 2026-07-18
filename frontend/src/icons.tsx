@@ -164,3 +164,30 @@ export function IconMessage(props: IconProps) {
     </svg>
   );
 }
+
+export function IconHome(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M4 11l8-7 8 7" />
+      <path d="M6 9.5V20h12V9.5" />
+    </svg>
+  );
+}
+
+export function IconCompass(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M15 9l-2 6-4 2 2-6 4-2z" />
+    </svg>
+  );
+}
+
+export function IconUser(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="8.5" r="3.5" />
+      <path d="M5 20c0-3.6 3.1-6.5 7-6.5s7 2.9 7 6.5" />
+    </svg>
+  );
+}
