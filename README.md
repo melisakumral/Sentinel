@@ -71,7 +71,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | Documentation & demo presentation | ✅ This README + the delivery info below |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
 | 10+ meaningful commits | ✅ See git history |
-| Live demo link (Vercel etc.) | ⬜ (https://www.loom.com/share/990394f3fc3a4d289aecb7e18f242654) |
+| Live demo link (Vercel etc.) | ✅ https://frontend-liart-eight-29.vercel.app |
 | Screenshots (mobile, CI, test output) | ⬜ https://www.loom.com/share/990394f3fc3a4d289aecb7e18f242654|
 | Demo video (1-2 min) | ⬜(https://www.loom.com/share/990394f3fc3a4d289aecb7e18f242654) |
 
@@ -86,7 +86,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | 10+ real users onboarded | ⬜ Manual — share the live link; see [Remaining Manual Steps](#-remaining-manual-steps) |
 | Proof of wallet interactions | ⬜ Manual — collect testnet tx hashes / stellar.expert links once real users donate |
 | Basic user feedback collected | ✅ mechanism: [`FeedbackButton`](frontend/src/FeedbackButton.tsx) — submits open a pre-filled GitHub issue (label `feedback`) on this public repo, no third-party form/account needed. ⬜ Manual — needs real submissions + a written summary |
-| Deployed to production | ⬜ Manual — `vercel.json` is ready; see [Remaining Manual Steps](#-remaining-manual-steps) |
+| Deployed to production | ✅ https://frontend-liart-eight-29.vercel.app |
 | Monitoring & analytics integration | ✅ **[Sentinel Watch](#️-sentinel-watch--soroban-monitoring-alerts--simulator)** (`frontend/src/watch/`) — live on-chain event feed, analytics (volume/actors/kinds), and threshold/frequency alerting for the deployed contract |
 | Optimized UX | ✅ `ConnectGate` (animated, mouse-reactive), unified "Stellar Blue" theme across both apps, `ProfileMenu` (account/copy/explorer/disconnect) |
 | Proper project structure & documentation | ✅ This README, [Project Structure](#️-project-structure) below, pure/testable modules |
@@ -111,7 +111,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | 20+ meaningful commits | ✅ 30 commits as of this update — see git history |
 | Updated documentation | ✅ this section + [Project Structure](#️-project-structure) kept current |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
-| Live deployed app | ⬜ Manual — see [Remaining Manual Steps](#-remaining-manual-steps) |
+| Live deployed app | ✅ https://frontend-liart-eight-29.vercel.app |
 
 ### User onboarding data collection (Google Form → Excel)
 
@@ -288,7 +288,7 @@ stellar contract invoke --id CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EM
 
 | Field | Value |
 |------|-------|
-| **Live Demo (Vercel)** | `https://... (see Remaining Manual Steps)` |
+| **Live Demo (Vercel)** | [frontend-liart-eight-29.vercel.app](https://frontend-liart-eight-29.vercel.app) |
 | **Pitch deck (Canva)** | [View / edit](https://www.canva.com/design/DAHPsLQnLiE/T-axOd-10_AiIVp6u9qdfw/edit) |
 | **Google Form (user onboarding)** | [Open form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog) |
 | **Form responses (Google Sheet)** | [Open sheet](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?resourcekey=&gid=1781705798#gid=1781705798) |
@@ -304,7 +304,7 @@ stellar contract invoke --id CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EM
 
 The following couldn't be automated because they require a browser, an account login, real third-party users, or screen recording:
 
-1. **Deploy to Vercel** — deploy `frontend/` with `vercel` (or import via the Vercel dashboard), add the `VITE_CONTRACT_ID` env var (Root Directory = `frontend`), add the link to the table above.
+1. ~~**Deploy to Vercel**~~ — ✅ done: https://frontend-liart-eight-29.vercel.app (Root Directory = `frontend`, `VITE_CONTRACT_ID` set, GitHub repo connected for auto-deploy on every push to `main`).
 2. **Screenshots** — run the app with `npm run dev`, connect with Freighter, capture in order: the wallet-options modal, the connected+balance/progress screen, the successful-transaction box, the `#/watch` monitoring dashboard, then narrow the browser for the mobile view, and save to `docs/`.
 3. **CI screenshot** — after this commit is pushed, screenshot the running pipeline on GitHub's Actions tab.
 4. **Test output screenshot** — screenshot the output of `cargo test --workspace` and/or `npm run test -- --run`.
