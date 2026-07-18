@@ -146,9 +146,9 @@ in. So far, feedback already acted on:
 | 20+ verified mainnet users | ⬜ Manual |
 | Real on-chain transaction activity | ⬜ Manual — the Activity feed and [Sentinel Watch](#️-sentinel-watch--soroban-monitoring-alerts--simulator) work against any contract ID, mainnet included, so activity is visible live once it exists |
 | Smart contract audit **or** team-approved security review | ⬜ Manual — see [Security review](#security-review) below for a starting self-review; a formal audit/approval still needs a human signature |
-| Social media launch post (Twitter/X) | ⬜ Manual — draft ready, see [Remaining Manual Steps](#-remaining-manual-steps) |
-| Promotional/showcase content | ⬜ Manual |
-| Ecosystem contribution (blog / workshop / video / OSS / community session) | ⬜ Manual — this README itself doubles as technical documentation; a dedicated blog post is drafted, see Remaining Manual Steps |
+| Social media launch post (Twitter/X) | ✅ [@SentinelSoroban launch post](https://x.com/SentinelSoroban/status/2078510589706486027) |
+| Promotional/showcase content | ✅ [LinkedIn post](https://www.linkedin.com/feed/update/urn:li:activity:7484306458310819840/) |
+| Ecosystem contribution (blog / workshop / video / OSS / community session) | ⬜ Manual — this README doubles as technical documentation, but the level asks for a dedicated piece (blog post, workshop, video, OSS contribution, or community session); none published yet, see Remaining Manual Steps |
 | 30+ meaningful commits | ✅ 30 commits as of this update — see git history |
 | Complete documentation & production setup | ✅ this README, [Project Structure](#️-project-structure), [Fee Sponsorship](#-black-belt-fee-sponsorship-gasless-transactions) setup docs below |
 | Public GitHub repo | ✅ https://github.com/melisakumral/Sentinel |
@@ -215,8 +215,8 @@ without it; the "Gasless" checkbox just shows a clear error if unconfigured):
 | User feedback form | ✅ in-app [`FeedbackButton`](frontend/src/FeedbackButton.tsx) (Level 4) + the [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog) (Level 5/6) — both funnel into the same feedback loop |
 | Product development commitment links | ⬜ Manual — link real commits against real feedback as they land (see the roadmap table below) |
 | Monthly growth report | ⬜ Manual — template started below |
-| Social growth proof (50+ followers) | ⬜ Manual |
-| Product update posts | ⬜ Manual |
+| Social growth proof (50+ followers) | ⬜ Manual — needs a follower-count screenshot once the account grows |
+| Product update posts | ✅ launch posts: [X/Twitter](https://x.com/SentinelSoroban/status/2078510589706486027), [LinkedIn](https://www.linkedin.com/feed/update/urn:li:activity:7484306458310819840/) — ⬜ Manual to keep posting as new features ship |
 | Community contribution proof | ⬜ Manual — carried over from Level 6 |
 | Updated documentation | ✅ this README, kept current every level |
 
@@ -326,12 +326,12 @@ The following couldn't be automated because they require a browser, an account l
 15. **Fund a mainnet sponsor account (Level 6, optional)** — only if enabling [Fee Sponsorship](#-black-belt-fee-sponsorship-gasless-transactions) on mainnet; same setup as testnet but with real XLM and mainnet's `SPONSOR_SECRET_KEY`.
 16. **Onboard 20+ verified mainnet users (Level 6)** — same on-chain proof mechanism as Levels 4/5, now on mainnet.
 17. **Audit or security review sign-off (Level 6)** — the [Security review](#security-review) section above is a starting self-review, not a substitute for a formal audit or advisor/team approval.
-18. **Twitter/X launch post (Level 6)** — draft, then post from the project's own account, and link it in the checklist.
+18. ~~**Twitter/X launch post (Level 6)**~~ — ✅ done: [X/Twitter](https://x.com/SentinelSoroban/status/2078510589706486027), [LinkedIn](https://www.linkedin.com/feed/update/urn:li:activity:7484306458310819840/).
 19. **Ecosystem contribution (Level 6)** — pick one: technical blog post, workshop, educational video, OSS contribution, or community session; link it once published.
 20. **Reuse the Google Form for Level 6** — the same form/Excel export from Level 5 already collects wallet address, email, name, and feedback; keep it running and re-export as mainnet users join.
 21. **Onboard 50+ new mainnet users (Level 7)** — same on-chain proof mechanism, now with a retention/growth lens rather than a one-time count.
 22. **Monthly growth report (Level 7)** — fill in the [Monthly growth report](#monthly-growth-report-template) table above once real usage data exists.
-23. **Grow social following to 50+ (Level 7)** and **post product updates** — pick one channel (Twitter/X is the one already referenced in Level 6) and post consistently; link posts in the checklist.
+23. **Grow social following to 50+ (Level 7)** — [@SentinelSoroban](https://x.com/SentinelSoroban) is live with a launch post; still ⬜ a follower-count screenshot once it reaches 50+. **Product update posts** are ✅ started (see the Level 7 table above) — keep posting as new features ship.
 24. **Community contribution (Level 7)** — same options as Level 6 (blog/workshop/video/OSS/community session); can reuse the Level 6 one if still relevant, or do a fresh one for this level.
 
 ## 🗂️ Project Structure
