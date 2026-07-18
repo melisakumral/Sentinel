@@ -106,7 +106,7 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 | Improved UX/UI & product stability | ✅ [`TopNav`](frontend/src/TopNav.tsx) replaces three different ad-hoc navigation patterns with one; [`ErrorBoundary`](frontend/src/ErrorBoundary.tsx) for crash resilience; unified "Stellar Blue" theme end-to-end |
 | Optimized onboarding experience | ✅ animated, mouse-reactive `ConnectGate` with wallet badges + non-custodial reassurance copy, now bilingual (EN/TR, auto-detected from the browser, toggle always visible in `TopNav`) |
 | New features based on feedback | ✅ i18n (`frontend/src/i18n/`) and the navigation redesign above were both direct responses to user testing feedback |
-| Professional pitch deck (PPT) | ⬜ Manual — see [Remaining Manual Steps](#-remaining-manual-steps) |
+| Professional pitch deck (PPT) | ✅ [Sentinel pitch deck (Canva)](https://www.canva.com/design/DAHPsLQnLiE/T-axOd-10_AiIVp6u9qdfw/edit) — problem, solution, market opportunity, architecture, growth strategy, roadmap |
 | Demo video (all features + user flow) | ⬜ Manual — see [Remaining Manual Steps](#-remaining-manual-steps) |
 | 20+ meaningful commits | ⬜ See git history — currently short of 20, will clear this bar with the commits for this level |
 | Updated documentation | ✅ this section + [Project Structure](#️-project-structure) kept current |
@@ -118,8 +118,8 @@ In both cases, the campaign contract reports the final outcome to a separate **S
 Per the Level 5 spec, user intake needs a Google Form (wallet address, email, name,
 product feedback/rating) with responses exported to Excel and linked here:
 
-- **Google Form**: `(add link once created — see Remaining Manual Steps)`
-- **Exported responses (Excel)**: `(add link/file once there are real responses, e.g. docs/user-feedback.xlsx)`
+- **Google Form**: [Sentinel user onboarding form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog)
+- **Responses (Google Sheet)**: [Sentinel user feedback — responses](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?resourcekey=&gid=1781705798#gid=1781705798) — ⬜ export to `.xlsx` (Google Sheets → File → Download → Microsoft Excel) and add the file to `docs/` once there are enough real responses to summarize
 
 ### Planned next-iteration roadmap (from user feedback)
 
@@ -207,7 +207,7 @@ checkbox just shows a clear error if unconfigured):
 | Live production app | ⬜ Manual — see [Remaining Manual Steps](#-remaining-manual-steps); `vercel.json` + docs are ready |
 | Proof of 50+ new mainnet users | ⬜ Manual — needs a mainnet deployment first (Level 6) |
 | Mainnet transaction proof | ⬜ Manual — Activity feed / Sentinel Watch already surface it live once it exists |
-| User feedback form | ✅ in-app [`FeedbackButton`](frontend/src/FeedbackButton.tsx) (Level 4) + the Google Form from Level 5/6 (once created) — both funnel into the same feedback loop |
+| User feedback form | ✅ in-app [`FeedbackButton`](frontend/src/FeedbackButton.tsx) (Level 4) + the [Google Form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog) (Level 5/6) — both funnel into the same feedback loop |
 | Product development commitment links | ⬜ Manual — link real commits against real feedback as they land (see the roadmap table below) |
 | Monthly growth report | ⬜ Manual — template started below |
 | Social growth proof (50+ followers) | ⬜ Manual |
@@ -289,6 +289,9 @@ stellar contract invoke --id CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EM
 | Field | Value |
 |------|-------|
 | **Live Demo (Vercel)** | `https://... (see Remaining Manual Steps)` |
+| **Pitch deck (Canva)** | [View / edit](https://www.canva.com/design/DAHPsLQnLiE/T-axOd-10_AiIVp6u9qdfw/edit) |
+| **Google Form (user onboarding)** | [Open form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog) |
+| **Form responses (Google Sheet)** | [Open sheet](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?resourcekey=&gid=1781705798#gid=1781705798) |
 | **Screenshot: wallet options** | `docs/wallet-options.png (add)` |
 | **Screenshot: connected wallet + balance/progress** | `docs/connected-progress.png (add)` |
 | **Screenshot: successful transaction** | `docs/tx-success.png (add)` |
@@ -309,8 +312,8 @@ The following couldn't be automated because they require a browser, an account l
 6. **Onboard 10+ real users (Level 4)** — share the deployed link; each donor's `deposit`/`claim`/`refund` transaction is a real, on-chain proof of interaction — collect the stellar.expert links (the Activity feed in the app already lists them).
 7. **Collect & summarize feedback (Level 4)** — point users at the in-app **Feedback** button (opens a GitHub issue labeled `feedback`); once a few come in, write a short summary here or in a `docs/feedback-summary.md`.
 8. **Onboard 50+ users (Level 5)** — broader promotion of the live link than Level 4; same on-chain proof mechanism (Activity feed + Sentinel Watch), just more of it.
-9. **Google Form + Excel export (Level 5)** — create a Google Form collecting wallet address, email, name, and a product rating/feedback field; once responses come in, export to Excel (Google Sheets → File → Download → `.xlsx`) and add the file/link to the [User onboarding data collection](#user-onboarding-data-collection-google-form--excel) section above.
-10. **Pitch deck (Level 5)** — a short deck covering: problem, solution, market opportunity, architecture, growth strategy, roadmap. Link it in the Level 5 table above.
+9. **Google Form + Excel export (Level 5)** — ✅ form created and linked above ([form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog), [responses sheet](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?resourcekey=&gid=1781705798#gid=1781705798)); still ⬜ export the sheet to `.xlsx` once there are enough real responses, and add the file to `docs/`.
+10. **Pitch deck (Level 5)** — ✅ done, linked in the [Level 5 table](#-level-5-requirements--coverage) and [Delivery Info](#-delivery-info) above.
 11. **Level 5 demo video** — a walkthrough covering every feature (not just the happy path) plus a real user flow.
 12. **Fill in the next-iteration roadmap table (Level 5)** — once real feedback/issues come in, record what changed and link the commit, in the table above.
 13. **Deploy contracts to mainnet (Level 6)** — same `stellar contract deploy`/`initialize` workflow as [Full Setup](#-full-setup) below, but with `--network mainnet` and a real, funded mainnet key (`stellar keys generate <name> --network mainnet`, funded from an exchange/on-ramp — friendbot doesn't exist on mainnet). **Must be run by the project owner**, not an assistant/agent — it spends real XLM and the resulting contract will hold real user funds.
