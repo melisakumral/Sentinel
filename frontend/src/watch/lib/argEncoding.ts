@@ -32,7 +32,10 @@ export function encodeArg({ type, value }: ArgInput): xdr.ScVal {
     case 'symbol':
       return nativeToScVal(raw, { type: 'symbol' });
     case 'bool':
-      return nativeToScVal(raw.toLowerCase() === 'true', { type: 'bool' });
+      // Booleans don't take a `type` hint — nativeToScVal always maps them
+      // to scvBool on its own (unlike strings/bytes/numbers, which are
+      // ambiguous and need one).
+      return nativeToScVal(raw.toLowerCase() === 'true');
     case 'u32':
       return nativeToScVal(Number(raw), { type: 'u32' });
     case 'i32':
