@@ -301,6 +301,7 @@ stellar contract invoke --id CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EM
 | **Screenshot: Explore, live campaign data** | [`docs/connected-progress.png`](docs/connected-progress.png) |
 | **Screenshot: Sentinel Watch, live event feed** | [`docs/watch.png`](docs/watch.png) |
 | **Screenshot: successful transaction** | ⬜ needs a real wallet interaction — see [Remaining Manual Steps](#-remaining-manual-steps) |
+| **Screenshot: live demo presentation** | [`docs/demo-presentation-1.jpg`](docs/demo-presentation-1.jpg), [`docs/demo-presentation-2.jpg`](docs/demo-presentation-2.jpg) |
 | **Screenshot: mobile responsive UI** | [`docs/mobile.png`](docs/mobile.png) |
 | **Screenshot: CI pipeline running** | [`docs/ci-run.png`](docs/ci-run.png) |
 | **Screenshot: test output (49 passing tests)** | [`docs/test-output.png`](docs/test-output.png) |
