@@ -297,15 +297,37 @@ stellar contract invoke --id CAAW34RVSG7O2ZS6LRKDVUCD2LELEEWTC4FWROIAXR2PZH636EM
 | **Pitch deck (Canva)** | [View / edit](https://www.canva.com/design/DAHPsLQnLiE/T-axOd-10_AiIVp6u9qdfw/edit) |
 | **Google Form (user onboarding)** | [Open form](https://docs.google.com/forms/d/e/1FAIpQLSfiymyQYAvNo8m1g6f6vtnWcB5mggLzdIk4ofZ5GEUQmGmo6w/viewform?usp=dialog) |
 | **Form responses (Google Sheet)** | [Open sheet](https://docs.google.com/spreadsheets/d/19BNOJRwDtDfTMsks8S1a1hCS4pfWovSWJrJVQs0_Xjk/edit?resourcekey=&gid=1781705798#gid=1781705798) |
-| **Screenshot: landing / connect wallet** | [`docs/wallet-options.png`](docs/wallet-options.png) |
-| **Screenshot: Explore, live campaign data** | [`docs/connected-progress.png`](docs/connected-progress.png) |
-| **Screenshot: Sentinel Watch, live event feed** | [`docs/watch.png`](docs/watch.png) |
 | **Screenshot: successful transaction** | ⬜ needs a real wallet interaction — see [Remaining Manual Steps](#-remaining-manual-steps) |
-| **Screenshot: live demo presentation** | [`docs/demo-presentation-1.jpg`](docs/demo-presentation-1.jpg), [`docs/demo-presentation-2.jpg`](docs/demo-presentation-2.jpg) |
-| **Screenshot: mobile responsive UI** | [`docs/mobile.png`](docs/mobile.png) |
-| **Screenshot: CI pipeline running** | [`docs/ci-run.png`](docs/ci-run.png) |
-| **Screenshot: test output (49 passing tests)** | [`docs/test-output.png`](docs/test-output.png) |
 | **Demo video (1-2 min)** | `(add)` |
+
+**Landing — connect wallet**
+
+<img src="docs/wallet-options.png" width="720" alt="Sentinel connect-wallet landing screen">
+
+**Explore — live campaign data**
+
+<img src="docs/connected-progress.png" width="720" alt="Sentinel Explore page showing live campaign funding data">
+
+**Sentinel Watch — live event feed**
+
+<img src="docs/watch.png" width="720" alt="Sentinel Watch live event feed, connected to the campaign contract">
+
+**Mobile — responsive UI**
+
+<img src="docs/mobile.png" width="320" alt="Sentinel Explore page on a mobile viewport, with the bottom tab bar">
+
+**CI — passing pipeline**
+
+<img src="docs/ci-run.png" width="720" alt="GitHub Actions CI run, both jobs passing">
+
+**Test output — 49 passing tests**
+
+<img src="docs/test-output.png" width="720" alt="Vitest output showing 49 passing frontend tests">
+
+**Live demo presentation**
+
+<img src="docs/demo-presentation-1.jpg" width="720" alt="Sentinel title slide during a live demo presentation">
+<img src="docs/demo-presentation-2.jpg" width="720" alt="Sentinel app being demoed live to reviewers">
 
 ## ⬜ Remaining Manual Steps
 
